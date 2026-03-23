@@ -20,27 +20,32 @@ const Header = () => {
   }, []);
 
   return (
-    <header className={`fixed w-full z-50 transition-all duration-500 ${isScrolled ? 'bg-cream/95 backdrop-blur-md shadow-sm py-4' : 'bg-transparent py-6'}`}>
+    <header className={`fixed w-full z-50 transition-all duration-500 bg-white ${isScrolled ? 'shadow-sm py-4' : 'py-6'}`}>
       <div className="max-w-7xl mx-auto px-6 md:px-12 flex justify-between items-center">
         {/* Mobile Menu Button */}
-        <button className={`md:hidden transition-colors ${isScrolled ? 'text-navy' : 'text-cream'}`} onClick={() => setMobileMenuOpen(true)}>
+        <button className="md:hidden text-navy transition-colors" onClick={() => setMobileMenuOpen(true)}>
           <Menu size={24} />
         </button>
 
         {/* Logo */}
-        <div className={`text-2xl md:text-3xl font-serif font-semibold tracking-widest uppercase transition-colors ${isScrolled ? 'text-navy' : 'text-cream'}`}>
-          Palbau
-        </div>
+        <a href="#" className="flex items-center justify-center">
+          <img 
+            src="https://appdesignproyectos.com/palbau.png" 
+            alt="PALBAU" 
+            className="h-10 md:h-12 object-contain"
+            referrerPolicy="no-referrer"
+          />
+        </a>
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex space-x-10 items-center">
-          <a href="#" className={`text-xs uppercase tracking-[0.2em] transition-colors hover:text-gold ${isScrolled ? 'text-navy' : 'text-cream'}`}>Inicio</a>
-          <a href="#tienda" className={`text-xs uppercase tracking-[0.2em] transition-colors hover:text-gold ${isScrolled ? 'text-navy' : 'text-cream'}`}>Tienda</a>
-          <a href="#contacto" className={`text-xs uppercase tracking-[0.2em] transition-colors hover:text-gold ${isScrolled ? 'text-navy' : 'text-cream'}`}>Contacto</a>
+          <a href="#" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Inicio</a>
+          <a href="#tienda" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Tienda</a>
+          <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Contacto</a>
         </nav>
 
         {/* Cart */}
-        <button className={`relative transition-colors hover:text-gold ${isScrolled ? 'text-navy' : 'text-cream'}`}>
+        <button className="relative text-navy transition-colors hover:text-gold">
           <ShoppingCart size={22} strokeWidth={1.5} />
           <span className="absolute -top-2 -right-2 bg-gold text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">0</span>
         </button>
@@ -54,10 +59,15 @@ const Header = () => {
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '-100%' }}
             transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-0 bg-cream z-50 flex flex-col p-6"
+            className="fixed inset-0 bg-white z-50 flex flex-col p-6"
           >
             <div className="flex justify-between items-center mb-16">
-              <div className="text-2xl font-serif font-semibold tracking-widest text-navy uppercase">Palbau</div>
+              <img 
+                src="https://appdesignproyectos.com/palbau.png" 
+                alt="PALBAU" 
+                className="h-10 object-contain"
+                referrerPolicy="no-referrer"
+              />
               <button onClick={() => setMobileMenuOpen(false)} className="text-navy"><X size={28} strokeWidth={1.5} /></button>
             </div>
             <nav className="flex flex-col space-y-8 text-xl font-serif text-center">
