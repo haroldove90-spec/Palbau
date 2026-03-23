@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect } from 'react';
-import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 
 const Header = () => {
@@ -39,15 +39,15 @@ const Header = () => {
 
         {/* Desktop Nav */}
         <nav className="hidden md:flex space-x-10 items-center">
-          <a href="#" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Inicio</a>
-          <a href="#tienda" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Tienda</a>
-          <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-gold">Contacto</a>
+          <a href="#" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Inicio</a>
+          <a href="#tienda" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Tienda</a>
+          <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Contacto</a>
         </nav>
 
         {/* Cart */}
-        <button className="relative text-navy transition-colors hover:text-gold">
+        <button className="relative text-navy transition-colors hover:text-lightblue">
           <ShoppingCart size={22} strokeWidth={1.5} />
-          <span className="absolute -top-2 -right-2 bg-gold text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">0</span>
+          <span className="absolute -top-2 -right-2 bg-red text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">0</span>
         </button>
       </div>
 
@@ -71,9 +71,9 @@ const Header = () => {
               <button onClick={() => setMobileMenuOpen(false)} className="text-navy"><X size={28} strokeWidth={1.5} /></button>
             </div>
             <nav className="flex flex-col space-y-8 text-xl font-serif text-center">
-              <a href="#" className="text-navy hover:text-gold transition-colors" onClick={() => setMobileMenuOpen(false)}>Inicio</a>
-              <a href="#tienda" className="text-navy hover:text-gold transition-colors" onClick={() => setMobileMenuOpen(false)}>Tienda</a>
-              <a href="#contacto" className="text-navy hover:text-gold transition-colors" onClick={() => setMobileMenuOpen(false)}>Contacto</a>
+              <a href="#" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Inicio</a>
+              <a href="#tienda" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Tienda</a>
+              <a href="#contacto" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Contacto</a>
             </nav>
             <div className="mt-auto text-center pb-8">
               <p className="text-navy/50 text-sm font-light">La excelencia en Lácteos y Embutidos</p>
@@ -90,15 +90,15 @@ const HeroSlider = () => {
   
   const slides = [
     {
-      image: "https://images.unsplash.com/photo-1621506289937-a8e4df240d0b?q=80&w=2070&auto=format&fit=crop",
+      image: "https://cdn.pixabay.com/photo/2020/02/23/16/26/sausage-4873861_1280.jpg",
       text: "De nuestra selección a tu mesa. Descubre el sabor auténtico de los mejores quesos y embutidos."
     },
     {
-      image: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=2073&auto=format&fit=crop",
+      image: "https://img.freepik.com/fotos-premium/tapas-jamon-iberico-salchichas-lomo_79295-6159.jpg",
       text: "Calidad que se siente en cada bocado. Quesos frescos, maduros e importados con frescura garantizada."
     },
     {
-      image: "https://images.unsplash.com/photo-1541529086526-db283c563270?q=80&w=2070&auto=format&fit=crop",
+      image: "https://thumbs.dreamstime.com/b/diversas-salchichas-29212434.jpg",
       text: "Tradición y frescura en cada entrega. Haz tu pedido hoy y recíbelo directamente en tu hogar."
     }
   ];
@@ -114,7 +114,7 @@ const HeroSlider = () => {
   const prevSlide = () => setCurrentSlide((prev) => (prev - 1 + slides.length) % slides.length);
 
   return (
-    <div className="relative h-screen w-full overflow-hidden bg-navy">
+    <div className="relative h-[calc(100vh-88px)] md:h-[calc(100vh-96px)] w-full overflow-hidden bg-navy">
       <AnimatePresence mode="wait">
         <motion.div
           key={currentSlide}
@@ -146,7 +146,7 @@ const HeroSlider = () => {
               initial={{ y: 20, opacity: 0 }}
               animate={{ y: 0, opacity: 1 }}
               transition={{ delay: 0.8, duration: 0.8 }}
-              className="mt-12 px-10 py-4 border border-cream/50 text-cream uppercase tracking-[0.2em] text-xs hover:bg-cream hover:text-navy transition-all duration-500 backdrop-blur-sm"
+              className="mt-12 px-10 py-4 bg-gold text-navy font-semibold uppercase tracking-[0.2em] text-xs hover:bg-lightblue hover:text-white transition-all duration-500 shadow-lg"
             >
               Descubrir Colección
             </motion.a>
@@ -181,13 +181,13 @@ const WelcomeSection = () => {
     <section className="py-32 px-6 md:px-12 max-w-4xl mx-auto text-center">
       <h2 className="text-3xl md:text-5xl font-serif text-navy mb-8 leading-tight">
         Bienvenidos a PALBAU<br/>
-        <span className="italic text-gold font-light text-2xl md:text-4xl mt-4 block">La excelencia en Lácteos y Embutidos.</span>
+        <span className="italic text-lightblue font-light text-2xl md:text-4xl mt-4 block">La excelencia en Lácteos y Embutidos.</span>
       </h2>
-      <div className="w-12 h-[1px] bg-gold mx-auto mb-12" />
-      <p className="text-navy/80 text-lg md:text-xl font-light leading-relaxed mb-10">
+      <div className="w-12 h-[1px] bg-red mx-auto mb-12" />
+      <p className="text-darkgray text-lg md:text-xl font-light leading-relaxed mb-10">
         Nos apasiona llevar a tu mesa una curaduría excepcional de productos que celebran el sabor real. Desde el corazón del campo hasta tu cocina, garantizamos calidad premium en cada selección.
       </p>
-      <p className="text-navy/60 text-base md:text-lg font-light leading-relaxed">
+      <p className="text-darkgray/80 text-base md:text-lg font-light leading-relaxed">
         En PALBAU, somos especialistas en la distribución de lácteos y embutidos de la más alta calidad. Nos distinguimos por una selección rigurosa que incluye desde el tradicional Queso Oaxaca y Rancho hasta exclusivas piezas importadas como Manchego y Gouda. Nuestra misión es facilitar el acceso a productos gourmet con la comodidad de una compra digital y la calidez de una atención personalizada.
       </p>
     </section>
@@ -198,30 +198,33 @@ const ValuesSection = () => {
   const values = [
     {
       title: "Selección Gourmet Curada",
-      desc: "Solo trabajamos con productores que cumplen los más altos estándares de frescura y sabor."
+      desc: "Solo trabajamos con productores que cumplen los más altos estándares de frescura y sabor.",
+      icon: Award
     },
     {
       title: "Atención Personalizada",
-      desc: "Tu pedido es gestionado directamente por nuestro equipo para asegurar que recibas exactamente lo que necesitas."
+      desc: "Tu pedido es gestionado directamente por nuestro equipo para asegurar que recibas exactamente lo que necesitas.",
+      icon: HeartHandshake
     },
     {
       title: "Frescura Garantizada",
-      desc: "Mantenemos una cadena de frío estricta para que cada producto llegue a tu hogar como si acabara de ser cortado."
+      desc: "Mantenemos una cadena de frío estricta para que cada producto llegue a tu hogar como si acabara de ser cortado.",
+      icon: Snowflake
     }
   ];
 
   return (
-    <section className="py-24 bg-navy text-cream relative overflow-hidden">
+    <section className="py-24 bg-navy text-white relative overflow-hidden">
       <div className="absolute inset-0 opacity-5 bg-[url('https://www.transparenttextures.com/patterns/stardust.png')]" />
       <div className="max-w-7xl mx-auto px-6 md:px-12 relative z-10">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-16 md:gap-12 text-center">
           {values.map((val, idx) => (
             <div key={idx} className="flex flex-col items-center">
-              <div className="w-16 h-16 border border-gold/30 rounded-full flex items-center justify-center mb-8 text-gold">
-                <span className="font-serif text-2xl italic">{idx + 1}</span>
+              <div className="w-16 h-16 border-2 border-lightblue rounded-full flex items-center justify-center mb-8 text-lightblue">
+                <val.icon size={28} strokeWidth={1.5} />
               </div>
-              <h3 className="text-lg font-serif mb-4 uppercase tracking-[0.15em]">{val.title}</h3>
-              <p className="text-cream/60 font-light leading-relaxed text-sm md:text-base max-w-xs">
+              <h3 className="text-lg font-serif mb-4 uppercase tracking-[0.15em] text-gold">{val.title}</h3>
+              <p className="text-white/80 font-light leading-relaxed text-sm md:text-base max-w-xs">
                 {val.desc}
               </p>
             </div>
@@ -259,9 +262,9 @@ const FeaturedCategories = () => {
   return (
     <section id="tienda" className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
       <div className="text-center mb-20">
-        <h2 className="text-xs uppercase tracking-[0.3em] text-gold mb-4">Nuestra Colección</h2>
+        <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestra Colección</h2>
         <h3 className="text-4xl md:text-5xl font-serif text-navy mb-6">Categorías Destacadas</h3>
-        <div className="w-12 h-[1px] bg-navy/20 mx-auto" />
+        <div className="w-12 h-[2px] bg-lightblue mx-auto" />
       </div>
       
       <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
@@ -283,10 +286,10 @@ const FeaturedCategories = () => {
             </div>
             <div className="text-center px-4">
               <h4 className="text-2xl font-serif text-navy mb-4">{cat.name}</h4>
-              <p className="text-navy/60 font-light text-sm leading-relaxed mb-6 max-w-md mx-auto">
+              <p className="text-darkgray/80 font-light text-sm leading-relaxed mb-6 max-w-md mx-auto">
                 {cat.desc}
               </p>
-              <span className="inline-flex items-center text-xs uppercase tracking-[0.2em] text-gold font-medium group-hover:text-navy transition-colors">
+              <span className="inline-flex items-center text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
                 Ver Productos <ChevronRight size={14} className="ml-2 transition-transform group-hover:translate-x-1" />
               </span>
             </div>
@@ -299,18 +302,18 @@ const FeaturedCategories = () => {
 
 const Footer = () => {
   return (
-    <footer id="contacto" className="bg-navy text-cream pt-24 pb-12 px-6 md:px-12">
+    <footer id="contacto" className="bg-darkgray text-white pt-24 pb-12 px-6 md:px-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 mb-20">
         <div className="md:col-span-5 lg:col-span-4">
-          <div className="text-3xl font-serif font-semibold tracking-widest uppercase mb-6">Palbau</div>
-          <p className="text-cream/50 font-light text-sm leading-relaxed max-w-sm">
+          <div className="text-3xl font-serif font-semibold tracking-widest uppercase mb-6 text-gold">Palbau</div>
+          <p className="text-white/70 font-light text-sm leading-relaxed max-w-sm">
             La excelencia en lácteos y embutidos. Calidad premium y frescura garantizada desde el campo hasta tu mesa.
           </p>
         </div>
         
         <div className="md:col-span-3 lg:col-span-2 lg:col-start-7">
-          <h4 className="font-serif text-lg mb-6 uppercase tracking-[0.15em] text-gold">Enlaces</h4>
-          <ul className="space-y-4 text-cream/70 font-light text-sm">
+          <h4 className="font-serif text-lg mb-6 uppercase tracking-[0.15em] text-lightblue">Enlaces</h4>
+          <ul className="space-y-4 text-white/80 font-light text-sm">
             <li><a href="#" className="hover:text-gold transition-colors">Inicio</a></li>
             <li><a href="#tienda" className="hover:text-gold transition-colors">Tienda</a></li>
             <li><a href="#contacto" className="hover:text-gold transition-colors">Contacto</a></li>
@@ -318,8 +321,8 @@ const Footer = () => {
         </div>
         
         <div className="md:col-span-4 lg:col-span-4">
-          <h4 className="font-serif text-lg mb-6 uppercase tracking-[0.15em] text-gold">Contacto</h4>
-          <ul className="space-y-4 text-cream/70 font-light text-sm">
+          <h4 className="font-serif text-lg mb-6 uppercase tracking-[0.15em] text-lightblue">Contacto</h4>
+          <ul className="space-y-4 text-white/80 font-light text-sm">
             <li>contacto@palbau.com</li>
             <li>+52 123 456 7890</li>
             <li className="pt-4">
@@ -332,7 +335,7 @@ const Footer = () => {
         </div>
       </div>
       
-      <div className="max-w-7xl mx-auto border-t border-cream/10 pt-8 flex flex-col md:flex-row justify-between items-center text-cream/40 text-xs font-light">
+      <div className="max-w-7xl mx-auto border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-white/50 text-xs font-light">
         <p>&copy; {new Date().getFullYear()} PALBAU. Todos los derechos reservados.</p>
         <p className="mt-4 md:mt-0">Diseño Minimalista & Premium</p>
       </div>
@@ -344,7 +347,7 @@ export default function App() {
   return (
     <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy">
       <Header />
-      <main>
+      <main className="pt-[88px] md:pt-[96px]">
         <HeroSlider />
         <WelcomeSection />
         <ValuesSection />

@@ -1,9 +1,12 @@
 @import "tailwindcss";
 
 @theme {
-  --color-navy: #002855;
+  --color-navy: #083063;
+  --color-lightblue: #4EB6E9;
+  --color-gold: #F7C030;
+  --color-red: #C11E21;
+  --color-darkgray: #282829;
   --color-cream: #FDFBF7;
-  --color-gold: #C5A059;
   
   --font-serif: "Cormorant Garamond", serif;
   --font-sans: "Inter", sans-serif;
@@ -11,7 +14,7 @@
 
 body {
   background-color: var(--color-cream);
-  color: var(--color-navy);
+  color: var(--color-darkgray);
   font-family: var(--font-sans);
   -webkit-font-smoothing: antialiased;
 }
