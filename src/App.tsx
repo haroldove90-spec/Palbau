@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
-import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake, Home, Store, Phone, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { Product, ProductProvider, useProducts } from './context/ProductContext';
@@ -136,26 +136,78 @@ const Header = () => {
             initial={{ opacity: 0, x: '-100%' }}
             animate={{ opacity: 1, x: 0 }}
             exit={{ opacity: 0, x: '-100%' }}
-            transition={{ type: "tween", duration: 0.3 }}
-            className="fixed inset-0 bg-white z-50 flex flex-col p-6"
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 bg-cream z-50 flex flex-col p-6 overflow-hidden"
           >
-            <div className="flex justify-between items-center mb-16">
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-lightblue/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-gold/10 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none"></div>
+
+            <div className="flex justify-between items-center mb-12 relative z-10">
               <img 
                 src="https://appdesignproyectos.com/palbau.png" 
                 alt="PALBAU" 
-                className="h-10 object-contain"
+                className="h-12 object-contain"
                 referrerPolicy="no-referrer"
               />
-              <button onClick={() => setMobileMenuOpen(false)} className="text-navy"><X size={28} strokeWidth={1.5} /></button>
+              <button 
+                onClick={() => setMobileMenuOpen(false)} 
+                className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-navy shadow-sm border border-gray-100 active:scale-90 transition-transform"
+              >
+                <X size={24} strokeWidth={2} />
+              </button>
             </div>
-            <nav className="flex flex-col space-y-8 text-xl font-serif text-center">
-              <Link to="/" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
-              <a href="/#tienda" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Tienda</a>
-              <a href="#contacto" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Contacto</a>
-              <Link to="/admin" className="text-gold font-bold hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
+            
+            <nav className="flex flex-col space-y-4 relative z-10">
+              <Link 
+                to="/" 
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-lightblue/10 text-lightblue flex items-center justify-center group-hover:bg-lightblue group-hover:text-white transition-colors">
+                  <Home size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Inicio</span>
+              </Link>
+              
+              <a 
+                href="/#tienda" 
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-red/10 text-red flex items-center justify-center group-hover:bg-red group-hover:text-white transition-colors">
+                  <Store size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Tienda</span>
+              </a>
+              
+              <a 
+                href="#contacto" 
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-navy/10 text-navy flex items-center justify-center group-hover:bg-navy group-hover:text-white transition-colors">
+                  <Phone size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Contacto</span>
+              </a>
+              
+              <Link 
+                to="/admin" 
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-gradient-to-r from-gold/10 to-gold/5 border border-gold/20 active:scale-95 transition-all mt-4" 
+                onClick={() => setMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-gold text-white flex items-center justify-center shadow-md shadow-gold/20">
+                  <Shield size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-bold">Admin</span>
+              </Link>
             </nav>
-            <div className="mt-auto text-center pb-8">
-              <p className="text-navy/50 text-sm font-light">La excelencia en Lácteos y Embutidos</p>
+            
+            <div className="mt-auto text-center pb-8 relative z-10">
+              <div className="w-16 h-1 bg-gray-200 mx-auto rounded-full mb-6"></div>
+              <p className="text-navy/50 text-sm font-light uppercase tracking-widest">La excelencia en</p>
+              <p className="text-navy font-serif text-lg mt-1">Lácteos y Embutidos</p>
             </div>
           </motion.div>
         )}
@@ -319,7 +371,7 @@ const FeaturedCategories = () => {
     {
       name: "Jamones Selectos",
       desc: "Variedad de jamones de pierna y pavo, con cortes precisos y texturas suaves, ideales para el consumo diario o eventos especiales.",
-      image: "https://images.unsplash.com/photo-1603048297172-c92544798d5e?q=80&w=2070&auto=format&fit=crop"
+      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYlrHP2bS6a45ZtldfT2N6oxyXqKMjG-XY7A&s"
     },
     {
       name: "Salchichas Premium",

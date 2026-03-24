@@ -1,8 +1,8 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu } from 'lucide-react';
-import { useProducts } from '../context/ProductContext';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home } from 'lucide-react';
+import { motion, AnimatePresence } from 'motion/react';
 
 const mockSalesData = [
   { time: '08:00', sales: 120 },
@@ -28,18 +28,116 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
       {/* Mobile Header */}
-      <div className="md:hidden bg-navy text-white p-4 flex justify-between items-center sticky top-0 z-50">
-        <div>
-          <h2 className="text-xl font-serif text-gold tracking-widest uppercase">Palbau</h2>
-          <p className="text-[10px] text-white/50 uppercase tracking-widest">Panel de Control</p>
+      <div className="md:hidden bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50">
+        <div className="flex items-center space-x-3">
+          <img 
+            src="https://appdesignproyectos.com/palbau.png" 
+            alt="PALBAU" 
+            className="h-8 object-contain"
+            referrerPolicy="no-referrer"
+          />
+          <div className="h-6 w-px bg-gray-200"></div>
+          <span className="text-xs font-bold text-gold uppercase tracking-widest">Admin</span>
         </div>
-        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
-          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        <button 
+          onClick={() => setIsMobileMenuOpen(true)} 
+          className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-navy shadow-sm border border-gray-100 active:scale-90 transition-transform"
+        >
+          <Menu size={20} strokeWidth={2} />
         </button>
       </div>
 
-      {/* Sidebar */}
-      <aside className={`${isMobileMenuOpen ? 'flex' : 'hidden'} md:flex w-full md:w-64 bg-navy text-white flex-col fixed md:sticky top-[72px] md:top-0 h-[calc(100vh-72px)] md:h-screen z-40`}>
+      {/* Mobile Menu Overlay */}
+      <AnimatePresence>
+        {isMobileMenuOpen && (
+          <motion.div 
+            initial={{ opacity: 0, x: '-100%' }}
+            animate={{ opacity: 1, x: 0 }}
+            exit={{ opacity: 0, x: '-100%' }}
+            transition={{ type: "spring", damping: 25, stiffness: 200 }}
+            className="fixed inset-0 bg-cream z-50 flex flex-col p-6 overflow-hidden md:hidden"
+          >
+            {/* Decorative background elements */}
+            <div className="absolute top-0 right-0 w-64 h-64 bg-gold/10 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2 pointer-events-none"></div>
+            <div className="absolute bottom-0 left-0 w-80 h-80 bg-navy/5 rounded-full blur-3xl translate-y-1/3 -translate-x-1/3 pointer-events-none"></div>
+
+            <div className="flex justify-between items-center mb-12 relative z-10">
+              <div className="flex items-center space-x-3">
+                <img 
+                  src="https://appdesignproyectos.com/palbau.png" 
+                  alt="PALBAU" 
+                  className="h-10 object-contain"
+                  referrerPolicy="no-referrer"
+                />
+                <div className="h-8 w-px bg-gray-300"></div>
+                <span className="text-sm font-bold text-gold uppercase tracking-widest">Admin</span>
+              </div>
+              <button 
+                onClick={() => setIsMobileMenuOpen(false)} 
+                className="w-10 h-10 bg-white rounded-full flex items-center justify-center text-navy shadow-sm border border-gray-100 active:scale-90 transition-transform"
+              >
+                <X size={24} strokeWidth={2} />
+              </button>
+            </div>
+            
+            <nav className="flex flex-col space-y-4 relative z-10">
+              <Link 
+                to="/admin/ventas" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/ventas') ? 'ring-2 ring-gold/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/ventas') ? 'bg-gold text-white shadow-md shadow-gold/20' : 'bg-gold/10 text-gold group-hover:bg-gold group-hover:text-white'}`}>
+                  <LayoutDashboard size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Ventas y Métricas</span>
+              </Link>
+              
+              <Link 
+                to="/admin/pedidos" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/pedidos') ? 'ring-2 ring-lightblue/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/pedidos') ? 'bg-lightblue text-white shadow-md shadow-lightblue/20' : 'bg-lightblue/10 text-lightblue group-hover:bg-lightblue group-hover:text-white'}`}>
+                  <ClipboardList size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Pedidos Recientes</span>
+              </Link>
+              
+              <Link 
+                to="/admin/productos" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/productos') ? 'ring-2 ring-navy/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/productos') ? 'bg-navy text-white shadow-md shadow-navy/20' : 'bg-navy/10 text-navy group-hover:bg-navy group-hover:text-white'}`}>
+                  <PackagePlus size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Gestión de Productos</span>
+              </Link>
+              
+              <div className="h-px bg-gray-200 my-4"></div>
+              
+              <Link 
+                to="/" 
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
+                  <Home size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-gray-600 font-medium">Volver a la Tienda</span>
+              </Link>
+            </nav>
+            
+            <div className="mt-auto text-center pb-8 relative z-10">
+              <div className="w-16 h-1 bg-gray-200 mx-auto rounded-full mb-6"></div>
+              <p className="text-navy/50 text-sm font-light uppercase tracking-widest">Panel de Administración</p>
+            </div>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      {/* Desktop Sidebar */}
+      <aside className="hidden md:flex w-64 bg-navy text-white flex-col sticky top-0 h-screen z-40">
         <div className="hidden md:block p-6 border-b border-white/10">
           <h2 className="text-2xl font-serif text-gold tracking-widest uppercase">Palbau</h2>
           <p className="text-xs text-white/50 mt-1 uppercase tracking-widest">Panel de Control</p>
