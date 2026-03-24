@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 
 const mockSalesData = [
@@ -23,18 +23,31 @@ const mockCategoryData = [
 
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
+  const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
   return (
-    <div className="min-h-screen bg-gray-50 flex">
+    <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Mobile Header */}
+      <div className="md:hidden bg-navy text-white p-4 flex justify-between items-center sticky top-0 z-50">
+        <div>
+          <h2 className="text-xl font-serif text-gold tracking-widest uppercase">Palbau</h2>
+          <p className="text-[10px] text-white/50 uppercase tracking-widest">Panel de Control</p>
+        </div>
+        <button onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)} className="p-2">
+          {isMobileMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+      </div>
+
       {/* Sidebar */}
-      <aside className="w-64 bg-navy text-white flex flex-col">
-        <div className="p-6 border-b border-white/10">
+      <aside className={`${isMobileMenuOpen ? 'flex' : 'hidden'} md:flex w-full md:w-64 bg-navy text-white flex-col fixed md:sticky top-[72px] md:top-0 h-[calc(100vh-72px)] md:h-screen z-40`}>
+        <div className="hidden md:block p-6 border-b border-white/10">
           <h2 className="text-2xl font-serif text-gold tracking-widest uppercase">Palbau</h2>
           <p className="text-xs text-white/50 mt-1 uppercase tracking-widest">Panel de Control</p>
         </div>
-        <nav className="flex-1 p-4 space-y-2">
+        <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
           <Link 
             to="/admin/ventas" 
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/ventas') ? 'bg-lightblue text-navy font-medium' : 'hover:bg-white/10 text-white/80'}`}
           >
             <LayoutDashboard size={20} />
@@ -42,6 +55,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/admin/pedidos" 
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/pedidos') ? 'bg-lightblue text-navy font-medium' : 'hover:bg-white/10 text-white/80'}`}
           >
             <ClipboardList size={20} />
@@ -49,13 +63,14 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           </Link>
           <Link 
             to="/admin/productos" 
+            onClick={() => setIsMobileMenuOpen(false)}
             className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/productos') ? 'bg-lightblue text-navy font-medium' : 'hover:bg-white/10 text-white/80'}`}
           >
             <PackagePlus size={20} />
             <span>Gestión de Productos</span>
           </Link>
         </nav>
-        <div className="p-4 border-t border-white/10">
+        <div className="p-4 border-t border-white/10 mt-auto">
           <Link to="/" className="flex items-center space-x-3 px-4 py-3 rounded-md hover:bg-white/10 text-white/80 transition-colors">
             <LogOut size={20} />
             <span>Volver a la Tienda</span>
@@ -64,7 +79,7 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
       </aside>
 
       {/* Main Content */}
-      <main className="flex-1 p-8 overflow-y-auto">
+      <main className="flex-1 p-4 md:p-8 overflow-y-auto">
         {children}
       </main>
     </div>
