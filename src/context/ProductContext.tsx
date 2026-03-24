@@ -63,7 +63,7 @@ export const initialProducts: Product[] = [
     id: 7,
     name: "Prosciutto di Parma",
     price: 38.00,
-    image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=2073&auto=format&fit=crop",
+    image: "https://mygourmet.com.mx/wp-content/uploads/2022/04/Salami-Calabrese-Castello.webp",
     description: "Jamón curado italiano de sabor dulce y refinado. Cortado en finas láminas, ideal para melón o pan artesanal.",
     category: "Jamones Selectos"
   },
@@ -71,7 +71,7 @@ export const initialProducts: Product[] = [
     id: 8,
     name: "Salami a las Finas Hierbas",
     price: 16.50,
-    image: "https://images.unsplash.com/photo-1585238341267-1cb115e5239e?q=80&w=2070&auto=format&fit=crop",
+    image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcR9evM-E9fNSKCNztmKax1CucXhjS_uzPDgNQ&s",
     description: "Salami de cerdo curado lentamente y recubierto con una mezcla de hierbas aromáticas. Excelente para tablas de quesos.",
     category: "Embutidos"
   }
