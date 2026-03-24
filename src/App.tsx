@@ -6,7 +6,17 @@
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BrowserRouter as Router, Routes, Route, Link, useParams } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
+
+const ScrollToTop = () => {
+  const { pathname, hash } = useLocation();
+  useEffect(() => {
+    if (!hash) {
+      window.scrollTo(0, 0);
+    }
+  }, [pathname, hash]);
+  return null;
+};
 
 // --- Data ---
 const productsData = [
@@ -37,6 +47,34 @@ const productsData = [
     price: 8.50,
     image: "https://images.unsplash.com/photo-1452195100486-9cc805987862?q=80&w=2069&auto=format&fit=crop",
     description: "El clásico queso de hebra mexicano, fresco y perfecto para quesadillas o para disfrutar solo. Su textura suave y sabor delicado lo hacen el favorito de toda la familia."
+  },
+  {
+    id: 5,
+    name: "Chorizo Español Artesanal",
+    price: 12.50,
+    image: "https://images.unsplash.com/photo-1533622597524-a1215e26c0a2?q=80&w=2070&auto=format&fit=crop",
+    description: "Chorizo curado con pimentón de la Vera. Sabor intenso y ligeramente picante, perfecto para tapas o guisos."
+  },
+  {
+    id: 6,
+    name: "Queso Gouda Añejo",
+    price: 14.00,
+    image: "https://images.unsplash.com/photo-1552767059-ce182ead6c1b?q=80&w=2070&auto=format&fit=crop",
+    description: "Queso holandés madurado por 12 meses. Presenta cristales de sal y un sabor profundo con notas a caramelo."
+  },
+  {
+    id: 7,
+    name: "Prosciutto di Parma",
+    price: 38.00,
+    image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=2073&auto=format&fit=crop",
+    description: "Jamón curado italiano de sabor dulce y refinado. Cortado en finas láminas, ideal para melón o pan artesanal."
+  },
+  {
+    id: 8,
+    name: "Salami a las Finas Hierbas",
+    price: 16.50,
+    image: "https://images.unsplash.com/photo-1585238341267-1cb115e5239e?q=80&w=2070&auto=format&fit=crop",
+    description: "Salami de cerdo curado lentamente y recubierto con una mezcla de hierbas aromáticas. Excelente para tablas de quesos."
   }
 ];
 
@@ -350,7 +388,7 @@ const FeaturedCategories = () => {
   ];
 
   return (
-    <section id="tienda" className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
+    <section className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
       <div className="text-center mb-20">
         <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestra Colección</h2>
         <h3 className="text-4xl md:text-5xl font-serif text-navy mb-6">Categorías Destacadas</h3>
@@ -437,7 +475,7 @@ const ProductsSection = () => {
   const { addToCart } = useCart();
   
   return (
-    <section className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
+    <section id="tienda" className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
       <div className="text-center mb-16">
         <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestros Productos</h2>
         <h3 className="text-4xl font-serif text-navy mb-6">Selección Especial</h3>
@@ -652,6 +690,7 @@ const HomePage = () => (
 export default function App() {
   return (
     <Router>
+      <ScrollToTop />
       <CartProvider>
         <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
           <Header />
