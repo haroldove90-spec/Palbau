@@ -121,11 +121,20 @@ const Header = () => {
         {/* Cart */}
         <button onClick={() => setIsCartOpen(true)} className="relative text-navy transition-colors hover:text-lightblue">
           <ShoppingCart size={22} strokeWidth={1.5} />
-          {cartCount > 0 && (
-            <span className="absolute -top-2 -right-2 bg-red text-white text-[9px] w-4 h-4 rounded-full flex items-center justify-center font-medium">
-              {cartCount}
-            </span>
-          )}
+          <AnimatePresence>
+            {cartCount > 0 && (
+              <motion.span 
+                key={cartCount}
+                initial={{ scale: 0 }}
+                animate={{ scale: [0, 1.3, 1] }}
+                transition={{ duration: 0.3 }}
+                exit={{ scale: 0 }}
+                className="absolute -top-2 -right-2 bg-[#C11E21] text-white text-[10px] min-w-[18px] h-[18px] px-1 rounded-full flex items-center justify-center font-bold shadow-sm z-10"
+              >
+                {cartCount}
+              </motion.span>
+            )}
+          </AnimatePresence>
         </button>
       </div>
 
@@ -420,9 +429,9 @@ const FeaturedCategories = () => {
               <p className="text-darkgray/80 font-light text-xs md:text-sm leading-relaxed mb-4 md:mb-6 max-w-md mx-auto line-clamp-3 md:line-clamp-none">
                 {cat.desc}
               </p>
-              <span className="inline-flex items-center text-[10px] md:text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
+              <Link to={`/productos?categoria=${encodeURIComponent(cat.name)}`} className="inline-flex items-center text-[10px] md:text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
                 Ver Productos <ChevronRight size={14} className="ml-1 md:ml-2 transition-transform group-hover:translate-x-1" />
-              </span>
+              </Link>
             </div>
           </motion.div>
         ))}
@@ -630,7 +639,7 @@ const CartModal = () => {
             animate={{ x: 0 }}
             exit={{ x: '100%' }}
             transition={{ type: 'tween', duration: 0.3 }}
-            className="fixed top-0 right-0 bottom-0 w-full max-w-md bg-white z-[70] shadow-2xl flex flex-col"
+            className="fixed top-0 right-0 h-[100dvh] w-full max-w-md bg-white z-[70] shadow-2xl flex flex-col"
           >
             <div className="flex items-center justify-between p-6 border-b border-gray-100">
               <h2 className="text-xl font-serif text-navy">Tu Carrito</h2>
@@ -747,6 +756,65 @@ const ContactSection = () => {
   );
 };
 
+const ProductsPage = () => {
+  const { products } = useProducts();
+  const { addToCart } = useCart();
+  const location = useLocation();
+  const searchParams = new URLSearchParams(location.search);
+  const categoryFilter = searchParams.get('categoria');
+
+  const filteredProducts = categoryFilter 
+    ? products.filter(p => p.category === categoryFilter)
+    : products;
+
+  return (
+    <div className="pt-[88px] md:pt-[96px] min-h-screen bg-cream">
+      {/* Header */}
+      <div className="bg-navy py-16 px-6 text-center">
+        <h1 className="text-3xl md:text-5xl font-serif text-white mb-4">
+          {categoryFilter ? categoryFilter : 'Todos los Productos'}
+        </h1>
+        <div className="w-12 h-[2px] bg-gold mx-auto mb-6" />
+        <p className="text-white/70 font-light max-w-2xl mx-auto">
+          Explora nuestra selección premium de lácteos y embutidos, curados especialmente para los paladares más exigentes.
+        </p>
+      </div>
+
+      {/* Product Grid */}
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
+        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10">
+          {filteredProducts.length > 0 ? (
+            filteredProducts.map(product => (
+              <div key={product.id} className="flex flex-col items-center text-center group bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
+                  <img src={product.image} alt={product.name} className="w-full h-40 md:h-56 object-cover transition-transform duration-700 group-hover:scale-105 rounded-sm" />
+                </Link>
+                <Link to={`/producto/${product.id}`}>
+                  <h4 className="text-sm md:text-lg font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
+                </Link>
+                <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
+                <button 
+                  onClick={() => addToCart(product, 1)}
+                  className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
+                >
+                  Añadir al carrito
+                </button>
+              </div>
+            ))
+          ) : (
+            <div className="col-span-full text-center py-20 text-darkgray/50">
+              <p className="text-xl">No se encontraron productos en esta categoría.</p>
+              <Link to="/productos" className="inline-block mt-6 px-6 py-2 border border-navy text-navy hover:bg-navy hover:text-white transition-colors">
+                Ver todos los productos
+              </Link>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const HomePage = () => (
   <>
     <HeroSlider />
@@ -772,6 +840,7 @@ export default function App() {
                 <main className="flex-1">
                   <Routes>
                     <Route path="/" element={<HomePage />} />
+                    <Route path="/productos" element={<ProductsPage />} />
                     <Route path="/producto/:id" element={<ProductPage />} />
                   </Routes>
                 </main>
