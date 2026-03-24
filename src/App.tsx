@@ -11,8 +11,15 @@ import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } 
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
   useEffect(() => {
-    if (!hash) {
-      window.scrollTo(0, 0);
+    if (hash) {
+      setTimeout(() => {
+        const element = document.querySelector(hash);
+        if (element) {
+          element.scrollIntoView({ behavior: 'smooth' });
+        }
+      }, 100);
+    } else {
+      window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
     }
   }, [pathname, hash]);
   return null;
@@ -388,14 +395,14 @@ const FeaturedCategories = () => {
   ];
 
   return (
-    <section className="py-32 px-6 md:px-12 max-w-7xl mx-auto">
-      <div className="text-center mb-20">
+    <section className="py-32 px-4 md:px-12 max-w-7xl mx-auto">
+      <div className="text-center mb-12 md:mb-20">
         <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestra Colección</h2>
-        <h3 className="text-4xl md:text-5xl font-serif text-navy mb-6">Categorías Destacadas</h3>
+        <h3 className="text-3xl md:text-5xl font-serif text-navy mb-6">Categorías Destacadas</h3>
         <div className="w-12 h-[2px] bg-lightblue mx-auto" />
       </div>
       
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-10 lg:gap-16">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-10 lg:gap-16">
         {categories.map((cat, idx) => (
           <motion.div 
             key={idx}
@@ -403,7 +410,7 @@ const FeaturedCategories = () => {
             transition={{ duration: 0.4 }}
             className="group cursor-pointer flex flex-col"
           >
-            <div className="relative h-[450px] overflow-hidden mb-8">
+            <div className="relative h-48 md:h-[450px] overflow-hidden mb-4 md:mb-8">
               <img 
                 src={cat.image} 
                 alt={cat.name} 
@@ -412,13 +419,13 @@ const FeaturedCategories = () => {
               />
               <div className="absolute inset-0 bg-navy/10 group-hover:bg-transparent transition-colors duration-500" />
             </div>
-            <div className="text-center px-4">
-              <h4 className="text-2xl font-serif text-navy mb-4">{cat.name}</h4>
-              <p className="text-darkgray/80 font-light text-sm leading-relaxed mb-6 max-w-md mx-auto">
+            <div className="text-center px-2 md:px-4">
+              <h4 className="text-lg md:text-2xl font-serif text-navy mb-2 md:mb-4">{cat.name}</h4>
+              <p className="text-darkgray/80 font-light text-xs md:text-sm leading-relaxed mb-4 md:mb-6 max-w-md mx-auto line-clamp-3 md:line-clamp-none">
                 {cat.desc}
               </p>
-              <span className="inline-flex items-center text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
-                Ver Productos <ChevronRight size={14} className="ml-2 transition-transform group-hover:translate-x-1" />
+              <span className="inline-flex items-center text-[10px] md:text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
+                Ver Productos <ChevronRight size={14} className="ml-1 md:ml-2 transition-transform group-hover:translate-x-1" />
               </span>
             </div>
           </motion.div>
@@ -430,7 +437,7 @@ const FeaturedCategories = () => {
 
 const Footer = () => {
   return (
-    <footer id="contacto" className="bg-darkgray text-white pt-24 pb-12 px-6 md:px-12">
+    <footer className="bg-darkgray text-white pt-24 pb-12 px-6 md:px-12">
       <div className="max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-12 gap-12 lg:gap-8 mb-20">
         <div className="md:col-span-5 lg:col-span-4">
           <div className="text-3xl font-serif font-semibold tracking-widest uppercase mb-6 text-gold">Palbau</div>
@@ -475,28 +482,28 @@ const ProductsSection = () => {
   const { addToCart } = useCart();
   
   return (
-    <section id="tienda" className="py-24 px-6 md:px-12 max-w-7xl mx-auto">
-      <div className="text-center mb-16">
+    <section id="tienda" className="py-24 px-4 md:px-12 max-w-7xl mx-auto">
+      <div className="text-center mb-12 md:mb-16">
         <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestros Productos</h2>
-        <h3 className="text-4xl font-serif text-navy mb-6">Selección Especial</h3>
+        <h3 className="text-3xl md:text-4xl font-serif text-navy mb-6">Selección Especial</h3>
         <div className="w-12 h-[2px] bg-lightblue mx-auto" />
       </div>
       
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-8">
+      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
         {productsData.map(product => (
           <div key={product.id} className="flex flex-col items-center text-center group">
-            <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-6">
-              <img src={product.image} alt={product.name} className="w-full h-64 object-cover transition-transform duration-700 group-hover:scale-105 rounded-md" />
+            <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
+              <img src={product.image} alt={product.name} className="w-full h-40 md:h-64 object-cover transition-transform duration-700 group-hover:scale-105 rounded-md" />
             </Link>
             <Link to={`/producto/${product.id}`}>
-              <h4 className="text-xl font-sans text-darkgray mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
+              <h4 className="text-sm md:text-xl font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
             </Link>
-            <p className="text-[#85A854] font-light mb-6">${product.price.toFixed(2)}</p>
+            <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
             <button 
               onClick={() => addToCart(product, 1)}
-              className="px-6 py-2 border border-darkgray text-darkgray text-sm hover:bg-darkgray hover:text-white transition-colors"
+              className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full md:w-auto"
             >
-              Add to cart
+              Añadir al carrito
             </button>
           </div>
         ))}
@@ -524,9 +531,9 @@ const ProductPage = () => {
         <div className="relative z-10 text-center px-6">
           <h1 className="text-4xl md:text-5xl font-serif text-white uppercase tracking-widest mb-4">{product.name}</h1>
           <div className="text-white/70 text-sm uppercase tracking-widest flex items-center justify-center space-x-2">
-            <Link to="/" className="hover:text-gold transition-colors">Home</Link>
+            <Link to="/" className="hover:text-gold transition-colors">Inicio</Link>
             <span>/</span>
-            <Link to="/#tienda" className="hover:text-gold transition-colors">Shop</Link>
+            <Link to="/#tienda" className="hover:text-gold transition-colors">Tienda</Link>
             <span>/</span>
             <span className="text-white">{product.name}</span>
           </div>
@@ -559,7 +566,7 @@ const ProductPage = () => {
                 onClick={() => addToCart(product, quantity)}
                 className="px-8 py-3 bg-white border border-darkgray text-darkgray text-sm hover:bg-darkgray hover:text-white transition-colors"
               >
-                Add to cart
+                Añadir al carrito
               </button>
             </div>
           </div>
@@ -568,15 +575,15 @@ const ProductPage = () => {
         {/* Sidebar */}
         <div className="lg:col-span-4 space-y-12">
           <div>
-            <h3 className="text-xl font-serif text-navy mb-6">Search</h3>
+            <h3 className="text-xl font-serif text-navy mb-6">Buscar</h3>
             <div className="flex">
-              <input type="text" placeholder="Search products..." className="flex-1 border border-gray-300 px-4 py-2 outline-none focus:border-lightblue transition-colors" />
-              <button className="px-6 py-2 bg-gray-100 border border-l-0 border-gray-300 text-darkgray hover:bg-gray-200 transition-colors">Search</button>
+              <input type="text" placeholder="Buscar productos..." className="flex-1 border border-gray-300 px-4 py-2 outline-none focus:border-lightblue transition-colors" />
+              <button className="px-6 py-2 bg-gray-100 border border-l-0 border-gray-300 text-darkgray hover:bg-gray-200 transition-colors">Buscar</button>
             </div>
           </div>
           
           <div>
-            <h3 className="text-xl font-serif text-navy mb-6">Product categories</h3>
+            <h3 className="text-xl font-serif text-navy mb-6">Categorías de productos</h3>
             <ul className="space-y-4 text-darkgray/70 font-light">
               <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Quesos Nacionales</li>
               <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Quesos Importados</li>
@@ -677,6 +684,68 @@ const CartModal = () => {
   );
 };
 
+const ContactSection = () => {
+  return (
+    <section id="contacto" className="py-24 px-6 md:px-12 max-w-7xl mx-auto bg-white">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-16">
+        <div>
+          <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Contacto</h2>
+          <h3 className="text-4xl font-serif text-navy mb-6">¿Tienes alguna duda o pedido especial?</h3>
+          <div className="w-12 h-[2px] bg-lightblue mb-8" />
+          <p className="text-darkgray/70 font-light leading-relaxed mb-8">
+            Ponte en contacto con nosotros. Estamos aquí para ayudarte a seleccionar los mejores productos para tu mesa o evento. Llena el formulario y te responderemos a la brevedad.
+          </p>
+          <div className="space-y-4 text-darkgray">
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gray-50 flex items-center justify-center rounded-full text-lightblue">
+                <MessageCircle size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-navy">WhatsApp / Teléfono</p>
+                <p className="text-sm font-light">+52 443 137 3266</p>
+              </div>
+            </div>
+            <div className="flex items-center space-x-4">
+              <div className="w-10 h-10 bg-gray-50 flex items-center justify-center rounded-full text-lightblue">
+                <Award size={20} />
+              </div>
+              <div>
+                <p className="text-sm font-bold text-navy">Correo Electrónico</p>
+                <p className="text-sm font-light">contacto@palbau.com</p>
+              </div>
+            </div>
+          </div>
+        </div>
+        <div className="bg-gray-50 p-8 rounded-sm">
+          <form className="space-y-6" onSubmit={(e) => e.preventDefault()}>
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-navy mb-2">Nombre Completo</label>
+              <input type="text" placeholder="Ej. Juan Pérez" className="w-full border border-gray-200 px-4 py-3 outline-none focus:border-lightblue transition-colors bg-white" />
+            </div>
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-navy mb-2">Correo Electrónico</label>
+                <input type="email" placeholder="ejemplo@correo.com" className="w-full border border-gray-200 px-4 py-3 outline-none focus:border-lightblue transition-colors bg-white" />
+              </div>
+              <div>
+                <label className="block text-xs uppercase tracking-wider text-navy mb-2">Teléfono</label>
+                <input type="tel" placeholder="Tu número" className="w-full border border-gray-200 px-4 py-3 outline-none focus:border-lightblue transition-colors bg-white" />
+              </div>
+            </div>
+            <div>
+              <label className="block text-xs uppercase tracking-wider text-navy mb-2">Mensaje</label>
+              <textarea rows={4} placeholder="¿En qué podemos ayudarte?" className="w-full border border-gray-200 px-4 py-3 outline-none focus:border-lightblue transition-colors bg-white resize-none"></textarea>
+            </div>
+            <button className="w-full py-4 bg-navy text-white text-sm uppercase tracking-widest hover:bg-lightblue transition-colors">
+              Enviar Mensaje
+            </button>
+          </form>
+        </div>
+      </div>
+    </section>
+  );
+};
+
 const HomePage = () => (
   <>
     <HeroSlider />
@@ -684,6 +753,7 @@ const HomePage = () => (
     <ValuesSection />
     <FeaturedCategories />
     <ProductsSection />
+    <ContactSection />
   </>
 );
 
