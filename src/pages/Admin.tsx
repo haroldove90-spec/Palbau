@@ -402,16 +402,12 @@ const AdminProducts = () => {
           secondaryImages: formData.secondaryImages
         });
         
-        if (updated) {
-          setEditingProduct(null);
-          setIsAdding(false);
-          setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
-          setIsCustomCategory(false);
-          setCustomCategory('');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          setError('No se pudo actualizar el producto.');
-        }
+        setEditingProduct(null);
+        setIsAdding(false);
+        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+        setIsCustomCategory(false);
+        setCustomCategory('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       } else {
         const newProduct = await addProduct({
           name: formData.name,
@@ -422,19 +418,29 @@ const AdminProducts = () => {
           secondaryImages: formData.secondaryImages
         });
         
-        if (newProduct) {
-          setLastAddedProduct(newProduct);
-          setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
-          setIsCustomCategory(false);
-          setCustomCategory('');
-          window.scrollTo({ top: 0, behavior: 'smooth' });
-        } else {
-          setError('No se pudo guardar el producto. Verifica la conexión con la base de datos.');
-        }
+        setLastAddedProduct(newProduct);
+        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+        setIsCustomCategory(false);
+        setCustomCategory('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
       }
     } catch (err: any) {
       console.error(err);
-      setError(err.message || 'Ocurrió un error inesperado al guardar.');
+      let message = 'Ocurrió un error inesperado.';
+      
+      if (err.message) {
+        message = err.message;
+      }
+      
+      if (err.code === '42501') {
+        message = 'Error de permisos: No tienes permiso para modificar la base de datos. Verifica las políticas RLS en Supabase.';
+      } else if (err.code === 'PGRST116') {
+        message = 'No se encontró el producto o no tienes permisos para verlo.';
+      } else if (err.message?.includes('fetch')) {
+        message = 'Error de conexión: No se pudo contactar con la base de datos. Verifica tu conexión a internet o la URL de Supabase.';
+      }
+
+      setError(message);
     } finally {
       setIsSaving(false);
     }

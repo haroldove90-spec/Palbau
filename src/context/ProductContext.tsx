@@ -13,8 +13,8 @@ export type Product = {
 
 type ProductContextType = {
   products: Product[];
-  addProduct: (product: Omit<Product, 'id'>) => Promise<Product | null>;
-  updateProduct: (id: number, product: Partial<Omit<Product, 'id'>>) => Promise<Product | null>;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<Product>;
+  updateProduct: (id: number, product: Partial<Omit<Product, 'id'>>) => Promise<Product>;
   deleteProduct: (id: number) => Promise<void>;
 };
 
@@ -63,7 +63,7 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id'>): Promise<Product | null> => {
+  const addProduct = async (product: Omit<Product, 'id'>): Promise<Product> => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -92,14 +92,14 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
         setProducts(prev => [newProduct, ...prev]);
         return newProduct;
       }
-      return null;
-    } catch (error) {
+      throw new Error('No se recibió respuesta de la base de datos al añadir el producto.');
+    } catch (error: any) {
       console.error('Error adding product:', error);
-      return null;
+      throw error;
     }
   };
 
-  const updateProduct = async (id: number, product: Partial<Omit<Product, 'id'>>): Promise<Product | null> => {
+  const updateProduct = async (id: number, product: Partial<Omit<Product, 'id'>>): Promise<Product> => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -129,10 +129,10 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
         setProducts(prev => prev.map(p => p.id === id ? updated : p));
         return updated;
       }
-      return null;
-    } catch (error) {
+      throw new Error('No se encontró el producto para actualizar o no hubo cambios.');
+    } catch (error: any) {
       console.error('Error updating product:', error);
-      return null;
+      throw error;
     }
   };
 
