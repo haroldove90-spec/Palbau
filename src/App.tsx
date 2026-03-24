@@ -4,7 +4,7 @@
  */
 
 import React, { useState, useEffect, createContext, useContext, Component, ReactNode, ErrorInfo } from 'react';
-import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake, Home, Store, Phone, Shield } from 'lucide-react';
+import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake, Home, Store, Phone, Shield, MapPin, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { Product, ProductProvider, useProducts } from './context/ProductContext';
@@ -609,11 +609,24 @@ const ProductPage = () => {
 
 const CartModal = () => {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, cartTotal } = useCart();
+  const [customerName, setCustomerName] = useState('');
+  const [customerAddress, setCustomerAddress] = useState('');
+  const [isLoadingLocation, setIsLoadingLocation] = useState(false);
 
   const handleWhatsAppCheckout = () => {
     if (cart.length === 0) return;
+    if (!customerName.trim()) {
+      alert('Por favor, ingresa tu nombre para continuar.');
+      return;
+    }
+    if (!customerAddress.trim()) {
+      alert('Por favor, ingresa tu ubicación para la entrega.');
+      return;
+    }
     
-    let message = "Hola! Me gustaría realizar el siguiente pedido:\n\n";
+    let message = `Hola! Soy *${customerName}*.\n`;
+    message += `Ubicación de entrega: ${customerAddress}\n\n`;
+    message += "Me gustaría realizar el siguiente pedido:\n\n";
     cart.forEach(item => {
       message += `- ${item.quantity}x ${item.product.name} ($${(item.product.price * item.quantity).toFixed(2)})\n`;
     });
@@ -621,6 +634,27 @@ const CartModal = () => {
     
     const encodedMessage = encodeURIComponent(message);
     window.open(`https://wa.me/524431373266?text=${encodedMessage}`, '_blank');
+  };
+
+  const getRealLocation = () => {
+    if (!navigator.geolocation) {
+      alert('Tu navegador no soporta geolocalización.');
+      return;
+    }
+
+    setIsLoadingLocation(true);
+    navigator.geolocation.getCurrentPosition(
+      (position) => {
+        const { latitude, longitude } = position.coords;
+        setCustomerAddress(`https://www.google.com/maps?q=${latitude},${longitude}`);
+        setIsLoadingLocation(false);
+      },
+      (error) => {
+        console.error('Error getting location:', error);
+        alert('No se pudo obtener tu ubicación. Por favor, ingrésala manualmente.');
+        setIsLoadingLocation(false);
+      }
+    );
   };
 
   return (
@@ -673,8 +707,39 @@ const CartModal = () => {
             </div>
             
             {cart.length > 0 && (
-              <div className="p-6 border-t border-gray-100 bg-gray-50">
-                <div className="flex justify-between items-center mb-6">
+              <div className="p-6 border-t border-gray-100 bg-gray-50 space-y-4">
+                <div className="space-y-3">
+                  <div className="relative">
+                    <User size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-darkgray/40" />
+                    <input 
+                      type="text" 
+                      placeholder="Tu nombre completo" 
+                      value={customerName}
+                      onChange={(e) => setCustomerName(e.target.value)}
+                      className="w-full pl-10 pr-4 py-3 bg-white border border-gray-200 rounded-sm text-sm outline-none focus:border-lightblue transition-colors"
+                    />
+                  </div>
+                  <div className="relative">
+                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-darkgray/40" />
+                    <input 
+                      type="text" 
+                      placeholder="Dirección o ubicación real" 
+                      value={customerAddress}
+                      onChange={(e) => setCustomerAddress(e.target.value)}
+                      className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-sm text-sm outline-none focus:border-lightblue transition-colors"
+                    />
+                    <button 
+                      onClick={getRealLocation}
+                      disabled={isLoadingLocation}
+                      className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-lightblue hover:bg-lightblue/10 rounded-full transition-colors disabled:opacity-50"
+                      title="Obtener mi ubicación real"
+                    >
+                      <MapPin size={16} className={isLoadingLocation ? 'animate-pulse' : ''} />
+                    </button>
+                  </div>
+                </div>
+
+                <div className="flex justify-between items-center pt-2">
                   <span className="text-navy font-medium">Total:</span>
                   <span className="text-xl text-gold font-serif font-bold">${cartTotal.toFixed(2)}</span>
                 </div>
