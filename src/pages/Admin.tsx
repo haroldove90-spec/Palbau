@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { useProducts } from '../context/ProductContext';
 
 const mockSalesData = [
   { time: '08:00', sales: 120 },
@@ -288,7 +289,7 @@ const AdminProducts = () => {
   };
 
   const handleSecondaryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const files = Array.from(e.target.files || []);
+    const files = Array.from(e.target.files || []) as File[];
     const urls = files.map(file => URL.createObjectURL(file));
     setFormData(prev => ({ 
       ...prev, 
