@@ -3,7 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { useProducts } from '../context/ProductContext';
+import { Product, useProducts } from '../context/ProductContext';
 
 const mockSalesData = [
   { time: '08:00', sales: 120 },
@@ -278,8 +278,9 @@ const AdminSales = () => {
 };
 
 const AdminProducts = () => {
-  const { products, addProduct, deleteProduct } = useProducts();
+  const { products, addProduct, updateProduct, deleteProduct } = useProducts();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
   const [lastAddedProduct, setLastAddedProduct] = useState<any>(null);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
@@ -391,23 +392,45 @@ const AdminProducts = () => {
 
     setIsSaving(true);
     try {
-      const newProduct = await addProduct({
-        name: formData.name,
-        description: formData.description,
-        category: finalCategory,
-        price: parseFloat(formData.price),
-        image: formData.image,
-        secondaryImages: formData.secondaryImages
-      });
-      
-      if (newProduct) {
-        setLastAddedProduct(newProduct);
-        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
-        setIsCustomCategory(false);
-        setCustomCategory('');
-        window.scrollTo({ top: 0, behavior: 'smooth' });
+      if (editingProduct) {
+        const updated = await updateProduct(editingProduct.id, {
+          name: formData.name,
+          description: formData.description,
+          category: finalCategory,
+          price: parseFloat(formData.price),
+          image: formData.image,
+          secondaryImages: formData.secondaryImages
+        });
+        
+        if (updated) {
+          setEditingProduct(null);
+          setIsAdding(false);
+          setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+          setIsCustomCategory(false);
+          setCustomCategory('');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError('No se pudo actualizar el producto.');
+        }
       } else {
-        setError('No se pudo guardar el producto. Verifica la conexión con la base de datos.');
+        const newProduct = await addProduct({
+          name: formData.name,
+          description: formData.description,
+          category: finalCategory,
+          price: parseFloat(formData.price),
+          image: formData.image,
+          secondaryImages: formData.secondaryImages
+        });
+        
+        if (newProduct) {
+          setLastAddedProduct(newProduct);
+          setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+          setIsCustomCategory(false);
+          setCustomCategory('');
+          window.scrollTo({ top: 0, behavior: 'smooth' });
+        } else {
+          setError('No se pudo guardar el producto. Verifica la conexión con la base de datos.');
+        }
       }
     } catch (err: any) {
       console.error(err);
@@ -415,6 +438,31 @@ const AdminProducts = () => {
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEdit = (product: Product) => {
+    setEditingProduct(product);
+    setFormData({
+      name: product.name,
+      description: product.description,
+      category: product.category || 'Quesos Nacionales',
+      price: product.price.toString(),
+      image: product.image,
+      secondaryImages: product.secondaryImages || []
+    });
+    
+    // Check if category is custom
+    const standardCategories = ['Quesos Nacionales', 'Quesos Importados', 'Jamones Selectos', 'Salchichas Premium', 'Embutidos'];
+    if (product.category && !standardCategories.includes(product.category)) {
+      setIsCustomCategory(true);
+      setCustomCategory(product.category);
+    } else {
+      setIsCustomCategory(false);
+      setCustomCategory('');
+    }
+    
+    setIsAdding(true);
+    window.scrollTo({ top: 0, behavior: 'smooth' });
   };
 
   const handleDelete = async (id: number, name: string) => {
@@ -431,7 +479,15 @@ const AdminProducts = () => {
           <p className="text-darkgray/70">Administra el catálogo de tu tienda.</p>
         </div>
         <button 
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding) {
+              setIsAdding(false);
+              setEditingProduct(null);
+              setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className="flex items-center space-x-2 bg-navy text-white px-4 py-2 rounded-md hover:bg-lightblue hover:text-navy transition-colors"
         >
           {isAdding ? <X size={18} /> : <PlusCircle size={18} />}
@@ -442,7 +498,9 @@ const AdminProducts = () => {
       {isAdding && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
           <div className="flex justify-between items-center mb-6 border-b pb-4">
-            <h3 className="text-lg font-medium text-navy">Añadir Nuevo Producto</h3>
+            <h3 className="text-lg font-medium text-navy">
+              {editingProduct ? `Editando: ${editingProduct.name}` : 'Añadir Nuevo Producto'}
+            </h3>
             {lastAddedProduct && (
               <motion.div 
                 initial={{ opacity: 0, y: -10 }}
@@ -629,10 +687,10 @@ const AdminProducts = () => {
                 {isSaving ? (
                   <>
                     <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
-                    <span>Guardando...</span>
+                    <span>{editingProduct ? 'Actualizando...' : 'Guardando...'}</span>
                   </>
                 ) : (
-                  <span>Guardar Producto</span>
+                  <span>{editingProduct ? 'Actualizar Producto' : 'Guardar Producto'}</span>
                 )}
               </button>
             </div>
@@ -665,7 +723,12 @@ const AdminProducts = () => {
                   <td className="px-6 py-4 text-sm font-medium text-[#85A854]">${product.price.toFixed(2)}</td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-4">
-                      <button className="text-lightblue hover:text-navy transition-colors">Editar</button>
+                      <button 
+                        onClick={() => handleEdit(product)}
+                        className="text-lightblue hover:text-navy transition-colors"
+                      >
+                        Editar
+                      </button>
                       <a 
                         href={`/producto/${product.id}`} 
                         target="_blank" 

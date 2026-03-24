@@ -14,6 +14,7 @@ export type Product = {
 type ProductContextType = {
   products: Product[];
   addProduct: (product: Omit<Product, 'id'>) => Promise<Product | null>;
+  updateProduct: (id: number, product: Partial<Omit<Product, 'id'>>) => Promise<Product | null>;
   deleteProduct: (id: number) => Promise<void>;
 };
 
@@ -98,6 +99,43 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
+  const updateProduct = async (id: number, product: Partial<Omit<Product, 'id'>>): Promise<Product | null> => {
+    try {
+      const { data, error } = await supabase
+        .from('products')
+        .update({
+          name: product.name,
+          price: product.price,
+          image: product.image,
+          secondary_images: product.secondaryImages,
+          description: product.description,
+          category: product.category
+        })
+        .eq('id', id)
+        .select();
+
+      if (error) throw error;
+      
+      if (data && data[0]) {
+        const updated: Product = {
+          id: data[0].id,
+          name: data[0].name,
+          price: Number(data[0].price),
+          image: data[0].image,
+          secondaryImages: data[0].secondary_images,
+          description: data[0].description,
+          category: data[0].category
+        };
+        setProducts(prev => prev.map(p => p.id === id ? updated : p));
+        return updated;
+      }
+      return null;
+    } catch (error) {
+      console.error('Error updating product:', error);
+      return null;
+    }
+  };
+
   const deleteProduct = async (id: number) => {
     try {
       const { error } = await supabase
@@ -113,7 +151,7 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
   };
 
   return (
-    <ProductContext.Provider value={{ products, addProduct, deleteProduct }}>
+    <ProductContext.Provider value={{ products, addProduct, updateProduct, deleteProduct }}>
       {loading ? (
         <div className="min-h-screen bg-cream flex items-center justify-center">
           <div className="w-12 h-12 border-4 border-navy border-t-gold rounded-full animate-spin"></div>
