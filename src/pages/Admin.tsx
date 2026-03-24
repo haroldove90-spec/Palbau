@@ -274,7 +274,53 @@ const AdminProducts = () => {
   const [lastAddedProduct, setLastAddedProduct] = useState<any>(null);
   const [isCustomCategory, setIsCustomCategory] = useState(false);
   const [customCategory, setCustomCategory] = useState('');
+  const [imageWarnings, setImageWarnings] = useState<{main?: string, secondary?: string[]}>({});
   
+  const processImage = (file: File, targetSize: number = 1200): Promise<{url: string, warning?: string}> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let warning = undefined;
+          if (img.width < 400 || img.height < 400) {
+            warning = 'La imagen es un poco pequeña, podría verse borrosa.';
+          } else if (img.width > 4000 || img.height > 4000) {
+            warning = 'La imagen es muy grande, la hemos optimizado para la web.';
+          }
+
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > targetSize) {
+              height *= targetSize / width;
+              width = targetSize;
+            }
+          } else {
+            if (height > targetSize) {
+              width *= targetSize / height;
+              height = targetSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          resolve({
+            url: canvas.toDataURL('image/jpeg', 0.8),
+            warning
+          });
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
   const [formData, setFormData] = useState({
     name: '',
     description: '',
@@ -284,20 +330,27 @@ const AdminProducts = () => {
     secondaryImages: [] as string[]
   });
 
-  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
-      const url = URL.createObjectURL(file);
+      const { url, warning } = await processImage(file);
       setFormData(prev => ({ ...prev, image: url }));
+      setImageWarnings(prev => ({ ...prev, main: warning }));
     }
   };
 
-  const handleSecondaryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleSecondaryImagesChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const files = Array.from(e.target.files || []) as File[];
-    const urls = files.map(file => URL.createObjectURL(file));
+    const processed = await Promise.all(files.map(file => processImage(file)));
+    
     setFormData(prev => ({ 
       ...prev, 
-      secondaryImages: [...prev.secondaryImages, ...urls] 
+      secondaryImages: [...prev.secondaryImages, ...processed.map(p => p.url)] 
+    }));
+
+    setImageWarnings(prev => ({ 
+      ...prev, 
+      secondary: [...(prev.secondary || []), ...processed.map(p => p.warning || '')] 
     }));
   };
 
@@ -454,15 +507,23 @@ const AdminProducts = () => {
                     </label>
                   </div>
                   {formData.image && (
-                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
-                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
-                      <button 
-                        type="button"
-                        onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
-                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
-                      >
-                        <X size={14} className="text-gray-600" />
-                      </button>
+                    <div className="flex flex-col space-y-2">
+                      <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                        <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, image: '' }));
+                            setImageWarnings(prev => ({ ...prev, main: undefined }));
+                          }}
+                          className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
+                        >
+                          <X size={14} className="text-gray-600" />
+                        </button>
+                      </div>
+                      {imageWarnings.main && (
+                        <p className="text-xs text-orange-500 font-medium max-w-[128px]">{imageWarnings.main}</p>
+                      )}
                     </div>
                   )}
                 </div>
@@ -482,15 +543,22 @@ const AdminProducts = () => {
                   {formData.secondaryImages.length > 0 && (
                     <div className="flex flex-wrap gap-4">
                       {formData.secondaryImages.map((url, idx) => (
-                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
-                          <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
-                          <button 
-                            type="button"
-                            onClick={() => removeSecondaryImage(idx)}
-                            className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
-                          >
-                            <X size={14} className="text-gray-600" />
-                          </button>
+                        <div key={idx} className="flex flex-col space-y-2">
+                          <div className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                            <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                            <button 
+                              type="button"
+                              onClick={() => removeSecondaryImage(idx)}
+                              className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
+                            >
+                              <X size={14} className="text-gray-600" />
+                            </button>
+                          </div>
+                          {imageWarnings.secondary?.[idx] && (
+                            <p className="text-[10px] text-orange-500 font-medium max-w-[96px] leading-tight">
+                              {imageWarnings.secondary[idx]}
+                            </p>
+                          )}
                         </div>
                       ))}
                     </div>

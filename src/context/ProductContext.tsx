@@ -114,7 +114,11 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
 
   return (
     <ProductContext.Provider value={{ products, addProduct, deleteProduct }}>
-      {!loading && children}
+      {loading ? (
+        <div className="min-h-screen bg-cream flex items-center justify-center">
+          <div className="w-12 h-12 border-4 border-navy border-t-gold rounded-full animate-spin"></div>
+        </div>
+      ) : children}
     </ProductContext.Provider>
   );
 };

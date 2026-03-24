@@ -826,31 +826,80 @@ const HomePage = () => (
   </>
 );
 
+// --- Error Boundary ---
+class ErrorBoundary extends React.Component<{ children: React.ReactNode }, { hasError: boolean, error: Error | null }> {
+  constructor(props: { children: React.ReactNode }) {
+    super(props);
+    this.state = { hasError: false, error: null };
+  }
+
+  static getDerivedStateFromError(error: Error) {
+    return { hasError: true, error };
+  }
+
+  componentDidCatch(error: Error, errorInfo: React.ErrorInfo) {
+    console.error('ErrorBoundary caught an error:', error, errorInfo);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return (
+        <div className="min-h-screen bg-cream flex items-center justify-center p-6 text-center">
+          <div className="max-w-md bg-white p-8 rounded-2xl shadow-xl border border-red/10">
+            <div className="w-16 h-16 bg-red/10 text-red rounded-full flex items-center justify-center mx-auto mb-6">
+              <Shield size={32} />
+            </div>
+            <h1 className="text-2xl font-serif text-navy mb-4">Algo salió mal</h1>
+            <p className="text-darkgray/70 mb-6 font-light">
+              Lo sentimos, ha ocurrido un error inesperado. Por favor, intenta recargar la página o contacta con soporte si el problema persiste.
+            </p>
+            {import.meta.env.DEV && (
+              <div className="text-left bg-gray-50 p-4 rounded-lg mb-6 overflow-auto max-h-40 text-xs font-mono text-red">
+                {this.state.error?.message}
+              </div>
+            )}
+            <button 
+              onClick={() => window.location.reload()}
+              className="px-8 py-3 bg-navy text-white text-sm uppercase tracking-widest hover:bg-lightblue transition-colors rounded-sm"
+            >
+              Recargar Página
+            </button>
+          </div>
+        </div>
+      );
+    }
+
+    return this.props.children;
+  }
+}
+
 export default function App() {
   return (
-    <Router>
-      <ScrollToTop />
-      <ProductProvider>
-        <CartProvider>
-          <Routes>
-            <Route path="/admin/*" element={<AdminRoutes />} />
-            <Route path="*" element={
-              <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
-                <Header />
-                <main className="flex-1">
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/productos" element={<ProductsPage />} />
-                    <Route path="/producto/:id" element={<ProductPage />} />
-                  </Routes>
-                </main>
-                <Footer />
-                <CartModal />
-              </div>
-            } />
-          </Routes>
-        </CartProvider>
-      </ProductProvider>
-    </Router>
+    <ErrorBoundary>
+      <Router>
+        <ScrollToTop />
+        <ProductProvider>
+          <CartProvider>
+            <Routes>
+              <Route path="/admin/*" element={<AdminRoutes />} />
+              <Route path="*" element={
+                <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
+                  <Header />
+                  <main className="flex-1">
+                    <Routes>
+                      <Route path="/" element={<HomePage />} />
+                      <Route path="/productos" element={<ProductsPage />} />
+                      <Route path="/producto/:id" element={<ProductPage />} />
+                    </Routes>
+                  </main>
+                  <Footer />
+                  <CartModal />
+                </div>
+              } />
+            </Routes>
+          </CartProvider>
+        </ProductProvider>
+      </Router>
+    </ErrorBoundary>
   );
 }
