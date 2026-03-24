@@ -13,7 +13,8 @@ export type Product = {
 
 type ProductContextType = {
   products: Product[];
-  addProduct: (product: Omit<Product, 'id'>) => void;
+  addProduct: (product: Omit<Product, 'id'>) => Promise<Product | null>;
+  deleteProduct: (id: number) => Promise<void>;
 };
 
 const ProductContext = createContext<ProductContextType | null>(null);
@@ -38,7 +39,7 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
       const { data, error } = await supabase
         .from('products')
         .select('*')
-        .order('id', { ascending: true });
+        .order('id', { ascending: false });
 
       if (error) throw error;
       
@@ -61,7 +62,7 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
     }
   };
 
-  const addProduct = async (product: Omit<Product, 'id'>) => {
+  const addProduct = async (product: Omit<Product, 'id'>): Promise<Product | null> => {
     try {
       const { data, error } = await supabase
         .from('products')
@@ -87,15 +88,32 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
           description: data[0].description,
           category: data[0].category
         };
-        setProducts(prev => [...prev, newProduct]);
+        setProducts(prev => [newProduct, ...prev]);
+        return newProduct;
       }
+      return null;
     } catch (error) {
       console.error('Error adding product:', error);
+      return null;
+    }
+  };
+
+  const deleteProduct = async (id: number) => {
+    try {
+      const { error } = await supabase
+        .from('products')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+      setProducts(prev => prev.filter(p => p.id !== id));
+    } catch (error) {
+      console.error('Error deleting product:', error);
     }
   };
 
   return (
-    <ProductContext.Provider value={{ products, addProduct }}>
+    <ProductContext.Provider value={{ products, addProduct, deleteProduct }}>
       {!loading && children}
     </ProductContext.Provider>
   );

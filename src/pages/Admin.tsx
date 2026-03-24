@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2 } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProducts } from '../context/ProductContext';
 
@@ -268,8 +268,12 @@ const AdminSales = () => {
 };
 
 const AdminProducts = () => {
-  const { products, addProduct } = useProducts();
+  const { products, addProduct, deleteProduct } = useProducts();
   const [isAdding, setIsAdding] = useState(false);
+  
+  const [lastAddedProduct, setLastAddedProduct] = useState<any>(null);
+  const [isCustomCategory, setIsCustomCategory] = useState(false);
+  const [customCategory, setCustomCategory] = useState('');
   
   const [formData, setFormData] = useState({
     name: '',
@@ -304,22 +308,35 @@ const AdminProducts = () => {
     }));
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.price || !formData.image) return;
     
-    addProduct({
+    const finalCategory = isCustomCategory ? customCategory : formData.category;
+    if (!finalCategory) return;
+
+    const newProduct = await addProduct({
       name: formData.name,
       description: formData.description,
-      category: formData.category,
+      category: finalCategory,
       price: parseFloat(formData.price),
       image: formData.image,
       secondaryImages: formData.secondaryImages
     });
     
-    setIsAdding(false);
-    setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
-    alert("¡Producto añadido con éxito!");
+    if (newProduct) {
+      setLastAddedProduct(newProduct);
+      setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+      setIsCustomCategory(false);
+      setCustomCategory('');
+      // We don't close the form immediately so they can see the link
+    }
+  };
+
+  const handleDelete = async (id: number, name: string) => {
+    if (window.confirm(`¿Estás seguro de que deseas eliminar "${name}"?`)) {
+      await deleteProduct(id);
+    }
   };
 
   return (
@@ -340,7 +357,27 @@ const AdminProducts = () => {
 
       {isAdding && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 mb-8">
-          <h3 className="text-lg font-medium text-navy mb-6 border-b pb-4">Añadir Nuevo Producto</h3>
+          <div className="flex justify-between items-center mb-6 border-b pb-4">
+            <h3 className="text-lg font-medium text-navy">Añadir Nuevo Producto</h3>
+            {lastAddedProduct && (
+              <motion.div 
+                initial={{ opacity: 0, y: -10 }}
+                animate={{ opacity: 1, y: 0 }}
+                className="flex items-center space-x-2 bg-green-50 text-green-700 px-3 py-1 rounded-full text-sm font-medium border border-green-100"
+              >
+                <span>¡Producto añadido!</span>
+                <a 
+                  href={`/producto/${lastAddedProduct.id}`} 
+                  target="_blank" 
+                  rel="noopener noreferrer"
+                  className="flex items-center space-x-1 underline hover:text-green-800"
+                >
+                  <span>Ver página</span>
+                  <ExternalLink size={14} />
+                </a>
+              </motion.div>
+            )}
+          </div>
           <form onSubmit={handleSubmit} className="space-y-6">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
               <div>
@@ -356,17 +393,40 @@ const AdminProducts = () => {
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Categoría</label>
-                <select 
-                  value={formData.category}
-                  onChange={e => setFormData({...formData, category: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
-                >
-                  <option value="Quesos Nacionales">Quesos Nacionales</option>
-                  <option value="Quesos Importados">Quesos Importados</option>
-                  <option value="Jamones Selectos">Jamones Selectos</option>
-                  <option value="Salchichas Premium">Salchichas Premium</option>
-                  <option value="Embutidos">Embutidos</option>
-                </select>
+                <div className="space-y-2">
+                  <select 
+                    value={isCustomCategory ? 'custom' : formData.category}
+                    onChange={e => {
+                      if (e.target.value === 'custom') {
+                        setIsCustomCategory(true);
+                      } else {
+                        setIsCustomCategory(false);
+                        setFormData({...formData, category: e.target.value});
+                      }
+                    }}
+                    className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
+                  >
+                    <option value="Quesos Nacionales">Quesos Nacionales</option>
+                    <option value="Quesos Importados">Quesos Importados</option>
+                    <option value="Jamones Selectos">Jamones Selectos</option>
+                    <option value="Salchichas Premium">Salchichas Premium</option>
+                    <option value="Embutidos">Embutidos</option>
+                    <option value="custom">+ Nueva Categoría...</option>
+                  </select>
+                  
+                  {isCustomCategory && (
+                    <motion.input 
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      type="text"
+                      required
+                      value={customCategory}
+                      onChange={e => setCustomCategory(e.target.value)}
+                      placeholder="Nombre de la nueva categoría"
+                      className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
+                    />
+                  )}
+                </div>
               </div>
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-2">Precio ($)</label>
@@ -485,7 +545,29 @@ const AdminProducts = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{product.category || 'Sin categoría'}</td>
                   <td className="px-6 py-4 text-sm font-medium text-[#85A854]">${product.price.toFixed(2)}</td>
-                  <td className="px-6 py-4 text-sm text-lightblue hover:text-navy cursor-pointer">Editar</td>
+                  <td className="px-6 py-4 text-sm">
+                    <div className="flex items-center space-x-4">
+                      <button className="text-lightblue hover:text-navy transition-colors">Editar</button>
+                      <a 
+                        href={`/producto/${product.id}`} 
+                        target="_blank" 
+                        rel="noopener noreferrer"
+                        className="text-gray-400 hover:text-navy transition-colors flex items-center space-x-1"
+                        title="Ver en tienda"
+                      >
+                        <Eye size={16} />
+                        <span>Ver</span>
+                      </a>
+                      <button 
+                        onClick={() => handleDelete(product.id, product.name)}
+                        className="text-red-400 hover:text-red-600 transition-colors flex items-center space-x-1"
+                        title="Eliminar producto"
+                      >
+                        <Trash2 size={16} />
+                        <span>Borrar</span>
+                      </button>
+                    </div>
+                  </td>
                 </tr>
               ))}
             </tbody>
