@@ -7,6 +7,8 @@ import React, { useState, useEffect, createContext, useContext } from 'react';
 import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
+import { Product, ProductProvider, useProducts } from './context/ProductContext';
+import { AdminRoutes } from './pages/Admin';
 
 const ScrollToTop = () => {
   const { pathname, hash } = useLocation();
@@ -25,75 +27,15 @@ const ScrollToTop = () => {
   return null;
 };
 
-// --- Data ---
-const productsData = [
-  {
-    id: 1,
-    name: "Queso Manchego Curado",
-    price: 11.00,
-    image: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=2073&auto=format&fit=crop",
-    description: "Queso de oveja curado con un sabor intenso y textura firme. Ideal para acompañar con un buen vino tinto y carnes frías. Elaborado con los más altos estándares de calidad y madurado cuidadosamente."
-  },
-  {
-    id: 2,
-    name: "Jamón Ibérico de Bellota",
-    price: 45.50,
-    image: "https://img.freepik.com/fotos-premium/tapas-jamon-iberico-salchichas-lomo_79295-6159.jpg",
-    description: "Auténtico jamón ibérico de bellota, curado durante 36 meses. Un manjar exquisito que se deshace en la boca, con vetas de grasa infiltrada que le otorgan un sabor inigualable."
-  },
-  {
-    id: 3,
-    name: "Salchicha Ahumada Premium",
-    price: 10.00,
-    image: "https://cdn.pixabay.com/photo/2020/02/23/16/26/sausage-4873861_1280.jpg",
-    description: "Salchichas ahumadas artesanalmente con madera de encino. Perfectas para asados y parrilladas familiares. Elaboradas con cortes selectos de carne y especias naturales."
-  },
-  {
-    id: 4,
-    name: "Queso Oaxaca Tradicional",
-    price: 8.50,
-    image: "https://images.unsplash.com/photo-1452195100486-9cc805987862?q=80&w=2069&auto=format&fit=crop",
-    description: "El clásico queso de hebra mexicano, fresco y perfecto para quesadillas o para disfrutar solo. Su textura suave y sabor delicado lo hacen el favorito de toda la familia."
-  },
-  {
-    id: 5,
-    name: "Chorizo Español Artesanal",
-    price: 12.50,
-    image: "https://images.unsplash.com/photo-1533622597524-a1215e26c0a2?q=80&w=2070&auto=format&fit=crop",
-    description: "Chorizo curado con pimentón de la Vera. Sabor intenso y ligeramente picante, perfecto para tapas o guisos."
-  },
-  {
-    id: 6,
-    name: "Queso Gouda Añejo",
-    price: 14.00,
-    image: "https://images.unsplash.com/photo-1552767059-ce182ead6c1b?q=80&w=2070&auto=format&fit=crop",
-    description: "Queso holandés madurado por 12 meses. Presenta cristales de sal y un sabor profundo con notas a caramelo."
-  },
-  {
-    id: 7,
-    name: "Prosciutto di Parma",
-    price: 38.00,
-    image: "https://images.unsplash.com/photo-1516467508483-a7212febe31a?q=80&w=2073&auto=format&fit=crop",
-    description: "Jamón curado italiano de sabor dulce y refinado. Cortado en finas láminas, ideal para melón o pan artesanal."
-  },
-  {
-    id: 8,
-    name: "Salami a las Finas Hierbas",
-    price: 16.50,
-    image: "https://images.unsplash.com/photo-1585238341267-1cb115e5239e?q=80&w=2070&auto=format&fit=crop",
-    description: "Salami de cerdo curado lentamente y recubierto con una mezcla de hierbas aromáticas. Excelente para tablas de quesos."
-  }
-];
-
 // --- Context ---
 type CartItem = {
-  product: typeof productsData[0];
+  product: Product;
   quantity: number;
 };
 
 const CartContext = createContext<{
   cart: CartItem[];
-  addToCart: (product: typeof productsData[0], quantity: number) => void;
+  addToCart: (product: Product, quantity: number) => void;
   removeFromCart: (productId: number) => void;
   cartCount: number;
   cartTotal: number;
@@ -111,7 +53,7 @@ const CartProvider = ({ children }: { children: React.ReactNode }) => {
   const [cart, setCart] = useState<CartItem[]>([]);
   const [isCartOpen, setIsCartOpen] = useState(false);
 
-  const addToCart = (product: typeof productsData[0], quantity: number) => {
+  const addToCart = (product: Product, quantity: number) => {
     setCart(prev => {
       const existing = prev.find(item => item.product.id === product.id);
       if (existing) {
@@ -173,6 +115,7 @@ const Header = () => {
           <Link to="/" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Inicio</Link>
           <a href="/#tienda" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Tienda</a>
           <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Contacto</a>
+          <Link to="/admin" className="text-xs uppercase tracking-[0.2em] text-gold font-bold transition-colors hover:text-lightblue">Admin</Link>
         </nav>
 
         {/* Cart */}
@@ -209,6 +152,7 @@ const Header = () => {
               <Link to="/" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Inicio</Link>
               <a href="/#tienda" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Tienda</a>
               <a href="#contacto" className="text-navy hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Contacto</a>
+              <Link to="/admin" className="text-gold font-bold hover:text-lightblue transition-colors" onClick={() => setMobileMenuOpen(false)}>Admin</Link>
             </nav>
             <div className="mt-auto text-center pb-8">
               <p className="text-navy/50 text-sm font-light">La excelencia en Lácteos y Embutidos</p>
@@ -472,7 +416,10 @@ const Footer = () => {
       
       <div className="max-w-7xl mx-auto border-t border-white/10 pt-8 flex flex-col md:flex-row justify-between items-center text-white/50 text-xs font-light">
         <p>&copy; {new Date().getFullYear()} PALBAU. Todos los derechos reservados.</p>
-        <p className="mt-4 md:mt-0">Diseño Minimalista & Premium</p>
+        <div className="mt-4 md:mt-0 flex items-center space-x-6">
+          <p>Diseño Minimalista & Premium</p>
+          <Link to="/admin" className="hover:text-gold transition-colors">Acceso Admin</Link>
+        </div>
       </div>
     </footer>
   );
@@ -480,6 +427,7 @@ const Footer = () => {
 
 const ProductsSection = () => {
   const { addToCart } = useCart();
+  const { products } = useProducts();
   
   return (
     <section id="tienda" className="py-24 px-4 md:px-12 max-w-7xl mx-auto">
@@ -490,7 +438,7 @@ const ProductsSection = () => {
       </div>
       
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
-        {productsData.map(product => (
+        {products.map(product => (
           <div key={product.id} className="flex flex-col items-center text-center group">
             <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
               <img src={product.image} alt={product.name} className="w-full h-40 md:h-64 object-cover transition-transform duration-700 group-hover:scale-105 rounded-md" />
@@ -514,7 +462,8 @@ const ProductsSection = () => {
 
 const ProductPage = () => {
   const { id } = useParams();
-  const product = productsData.find(p => p.id === Number(id));
+  const { products } = useProducts();
+  const product = products.find(p => p.id === Number(id));
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
 
@@ -761,19 +710,26 @@ export default function App() {
   return (
     <Router>
       <ScrollToTop />
-      <CartProvider>
-        <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
-          <Header />
-          <main className="flex-1">
-            <Routes>
-              <Route path="/" element={<HomePage />} />
-              <Route path="/producto/:id" element={<ProductPage />} />
-            </Routes>
-          </main>
-          <Footer />
-          <CartModal />
-        </div>
-      </CartProvider>
+      <ProductProvider>
+        <CartProvider>
+          <Routes>
+            <Route path="/admin/*" element={<AdminRoutes />} />
+            <Route path="*" element={
+              <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
+                <Header />
+                <main className="flex-1">
+                  <Routes>
+                    <Route path="/" element={<HomePage />} />
+                    <Route path="/producto/:id" element={<ProductPage />} />
+                  </Routes>
+                </main>
+                <Footer />
+                <CartModal />
+              </div>
+            } />
+          </Routes>
+        </CartProvider>
+      </ProductProvider>
     </Router>
   );
 }
