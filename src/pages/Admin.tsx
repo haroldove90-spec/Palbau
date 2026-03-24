@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2 } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { useProducts } from '../context/ProductContext';
 
@@ -26,8 +26,18 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
   
+  const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col md:flex-row">
+      {/* Configuration Warning */}
+      {!isSupabaseConfigured && (
+        <div className="fixed top-0 left-0 right-0 bg-red text-white py-2 px-4 z-[100] text-center text-xs font-bold uppercase tracking-widest flex items-center justify-center space-x-2">
+          <Shield size={14} />
+          <span>Error: Supabase no está configurado. Revisa las variables de entorno en Vercel.</span>
+        </div>
+      )}
+
       {/* Mobile Header */}
       <div className="md:hidden bg-white shadow-sm p-4 flex justify-between items-center sticky top-0 z-50">
         <div className="flex items-center space-x-3">
@@ -330,6 +340,9 @@ const AdminProducts = () => {
     secondaryImages: [] as string[]
   });
 
+  const [isSaving, setIsSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const handleMainImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0];
     if (file) {
@@ -363,26 +376,44 @@ const AdminProducts = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!formData.name || !formData.price || !formData.image) return;
+    setError(null);
+
+    if (!formData.name || !formData.price || !formData.image) {
+      setError('Por favor, completa los campos obligatorios: Nombre, Precio e Imagen Principal.');
+      return;
+    }
     
     const finalCategory = isCustomCategory ? customCategory : formData.category;
-    if (!finalCategory) return;
+    if (!finalCategory) {
+      setError('Por favor, selecciona o escribe una categoría.');
+      return;
+    }
 
-    const newProduct = await addProduct({
-      name: formData.name,
-      description: formData.description,
-      category: finalCategory,
-      price: parseFloat(formData.price),
-      image: formData.image,
-      secondaryImages: formData.secondaryImages
-    });
-    
-    if (newProduct) {
-      setLastAddedProduct(newProduct);
-      setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
-      setIsCustomCategory(false);
-      setCustomCategory('');
-      // We don't close the form immediately so they can see the link
+    setIsSaving(true);
+    try {
+      const newProduct = await addProduct({
+        name: formData.name,
+        description: formData.description,
+        category: finalCategory,
+        price: parseFloat(formData.price),
+        image: formData.image,
+        secondaryImages: formData.secondaryImages
+      });
+      
+      if (newProduct) {
+        setLastAddedProduct(newProduct);
+        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+        setIsCustomCategory(false);
+        setCustomCategory('');
+        window.scrollTo({ top: 0, behavior: 'smooth' });
+      } else {
+        setError('No se pudo guardar el producto. Verifica la conexión con la base de datos.');
+      }
+    } catch (err: any) {
+      console.error(err);
+      setError(err.message || 'Ocurrió un error inesperado al guardar.');
+    } finally {
+      setIsSaving(false);
     }
   };
 
@@ -578,12 +609,31 @@ const AdminProducts = () => {
                 />
               </div>
             </div>
+            {error && (
+              <motion.div 
+                initial={{ opacity: 0, height: 0 }}
+                animate={{ opacity: 1, height: 'auto' }}
+                className="bg-red/10 border border-red/20 text-red px-4 py-3 rounded-md text-sm font-medium mb-4 flex items-center space-x-2"
+              >
+                <div className="w-2 h-2 bg-red rounded-full animate-pulse"></div>
+                <span>{error}</span>
+              </motion.div>
+            )}
+
             <div className="flex justify-end">
               <button 
                 type="submit"
-                className="bg-[#85A854] text-white px-6 py-2 rounded-md hover:bg-[#6b8743] transition-colors font-medium"
+                disabled={isSaving}
+                className={`bg-[#85A854] text-white px-8 py-3 rounded-md transition-all font-medium flex items-center space-x-2 ${isSaving ? 'opacity-70 cursor-not-allowed scale-95' : 'hover:bg-[#6b8743] hover:shadow-lg active:scale-95'}`}
               >
-                Guardar Producto
+                {isSaving ? (
+                  <>
+                    <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                    <span>Guardando...</span>
+                  </>
+                ) : (
+                  <span>Guardar Producto</span>
+                )}
               </button>
             </div>
           </form>
