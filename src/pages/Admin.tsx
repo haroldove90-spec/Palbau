@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X } from 'lucide-react';
 import { useProducts } from '../context/ProductContext';
 
 const mockSalesData = [
@@ -162,8 +162,33 @@ const AdminProducts = () => {
     description: '',
     category: 'Quesos Nacionales',
     price: '',
-    image: ''
+    image: '',
+    secondaryImages: [] as string[]
   });
+
+  const handleMainImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const url = URL.createObjectURL(file);
+      setFormData(prev => ({ ...prev, image: url }));
+    }
+  };
+
+  const handleSecondaryImagesChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const files = Array.from(e.target.files || []);
+    const urls = files.map(file => URL.createObjectURL(file));
+    setFormData(prev => ({ 
+      ...prev, 
+      secondaryImages: [...prev.secondaryImages, ...urls] 
+    }));
+  };
+
+  const removeSecondaryImage = (indexToRemove: number) => {
+    setFormData(prev => ({
+      ...prev,
+      secondaryImages: prev.secondaryImages.filter((_, index) => index !== indexToRemove)
+    }));
+  };
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
@@ -174,11 +199,12 @@ const AdminProducts = () => {
       description: formData.description,
       category: formData.category,
       price: parseFloat(formData.price),
-      image: formData.image
+      image: formData.image,
+      secondaryImages: formData.secondaryImages
     });
     
     setIsAdding(false);
-    setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '' });
+    setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
     alert("¡Producto añadido con éxito!");
   };
 
@@ -240,17 +266,64 @@ const AdminProducts = () => {
                   placeholder="0.00"
                 />
               </div>
-              <div>
-                <label className="block text-sm font-medium text-gray-700 mb-2">URL de la Imagen</label>
-                <input 
-                  type="url" 
-                  required
-                  value={formData.image}
-                  onChange={e => setFormData({...formData, image: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
-                  placeholder="https://..."
-                />
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Imagen Principal</label>
+                <div className="flex items-center space-x-6">
+                  <div className="flex-1">
+                    <label className="flex flex-col items-center justify-center w-full h-32 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                      <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                        <UploadCloud className="w-8 h-8 mb-3 text-gray-400" />
+                        <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Haz clic para subir</span> o arrastra y suelta</p>
+                        <p className="text-xs text-gray-500">PNG, JPG o WEBP (Max. 2MB)</p>
+                      </div>
+                      <input type="file" className="hidden" accept="image/*" onChange={handleMainImageChange} />
+                    </label>
+                  </div>
+                  {formData.image && (
+                    <div className="relative w-32 h-32 rounded-lg overflow-hidden border border-gray-200">
+                      <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                      <button 
+                        type="button"
+                        onClick={() => setFormData(prev => ({ ...prev, image: '' }))}
+                        className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
+                      >
+                        <X size={14} className="text-gray-600" />
+                      </button>
+                    </div>
+                  )}
+                </div>
               </div>
+
+              <div className="md:col-span-2">
+                <label className="block text-sm font-medium text-gray-700 mb-2">Imágenes Secundarias</label>
+                <div className="flex flex-col space-y-4">
+                  <label className="flex flex-col items-center justify-center w-full h-24 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors">
+                    <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                      <UploadCloud className="w-6 h-6 mb-2 text-gray-400" />
+                      <p className="text-sm text-gray-500">Subir imágenes adicionales</p>
+                    </div>
+                    <input type="file" className="hidden" accept="image/*" multiple onChange={handleSecondaryImagesChange} />
+                  </label>
+                  
+                  {formData.secondaryImages.length > 0 && (
+                    <div className="flex flex-wrap gap-4">
+                      {formData.secondaryImages.map((url, idx) => (
+                        <div key={idx} className="relative w-24 h-24 rounded-lg overflow-hidden border border-gray-200">
+                          <img src={url} alt={`Preview ${idx}`} className="w-full h-full object-cover" />
+                          <button 
+                            type="button"
+                            onClick={() => removeSecondaryImage(idx)}
+                            className="absolute top-1 right-1 bg-white rounded-full p-1 shadow-sm hover:bg-gray-100"
+                          >
+                            <X size={14} className="text-gray-600" />
+                          </button>
+                        </div>
+                      ))}
+                    </div>
+                  )}
+                </div>
+              </div>
+
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Descripción</label>
                 <textarea 
