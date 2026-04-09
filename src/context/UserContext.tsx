@@ -12,7 +12,7 @@ export type UserProfile = {
 type UserContextType = {
   users: UserProfile[];
   fetchUsers: () => Promise<void>;
-  registerUser: (email: string, fullName: string, role: string) => Promise<void>;
+  registerUser: (email: string, fullName: string, role: string, password?: string) => Promise<void>;
   updateUser: (id: string, updates: Partial<UserProfile>) => Promise<void>;
 };
 
@@ -45,18 +45,49 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const registerUser = async (email: string, fullName: string, role: string) => {
+  const registerUser = async (email: string, fullName: string, role: string, password?: string) => {
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .insert([{ 
-          email, 
-          full_name: fullName, 
-          role,
-          id: crypto.randomUUID()
-        }]);
+      // Si se proporciona contraseña, intentamos crear el usuario en Auth primero
+      if (password) {
+        const { data: authData, error: authError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              role: role
+            }
+          }
+        });
+        
+        if (authError) throw authError;
+        
+        // El trigger de Supabase debería crear el perfil automáticamente, 
+        // pero si no existe, lo insertamos manualmente
+        if (authData.user) {
+          const { error: profileError } = await supabase
+            .from('profiles')
+            .upsert([{ 
+              id: authData.user.id,
+              email, 
+              full_name: fullName, 
+              role
+            }]);
+          if (profileError) console.warn('Profile might already exist via trigger:', profileError);
+        }
+      } else {
+        // Registro simple solo en la tabla profiles (legacy/fallback)
+        const { error } = await supabase
+          .from('profiles')
+          .insert([{ 
+            email, 
+            full_name: fullName, 
+            role,
+            id: crypto.randomUUID()
+          }]);
+        if (error) throw error;
+      }
 
-      if (error) throw error;
       await fetchUsers();
     } catch (error) {
       console.error('Error registering user:', error);

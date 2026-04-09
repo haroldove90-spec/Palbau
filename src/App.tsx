@@ -117,7 +117,7 @@ const Header = () => {
         <nav className="hidden md:flex space-x-10 items-center">
           <Link to="/" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Inicio</Link>
           <Link to="/productos" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Tienda</Link>
-          <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Contacto</a>
+          <Link to="/#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Contacto</Link>
           <Link to="/admin" className="text-xs uppercase tracking-[0.2em] text-gold font-bold transition-colors hover:text-lightblue">Admin</Link>
         </nav>
 
@@ -193,8 +193,8 @@ const Header = () => {
                 <span className="text-xl font-serif text-navy font-medium">Tienda</span>
               </Link>
               
-              <a 
-                href="#contacto" 
+              <Link 
+                to="/#contacto" 
                 className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -202,7 +202,7 @@ const Header = () => {
                   <Phone size={24} strokeWidth={1.5} />
                 </div>
                 <span className="text-xl font-serif text-navy font-medium">Contacto</span>
-              </a>
+              </Link>
               
               <Link 
                 to="/admin" 
