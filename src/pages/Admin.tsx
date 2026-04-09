@@ -1,9 +1,11 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { Product, useProducts } from '../context/ProductContext';
+import { useOrders, Order } from '../context/OrderContext';
+import { useUsers, UserProfile } from '../context/UserContext';
 
 const mockSalesData = [
   { time: '08:00', sales: 120 },
@@ -113,6 +115,17 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
                 <span className="text-xl font-serif text-navy font-medium">Pedidos Recientes</span>
               </Link>
+
+              <Link 
+                to="/admin/usuarios" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/usuarios') ? 'ring-2 ring-gold/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/usuarios') ? 'bg-gold text-white shadow-md shadow-gold/20' : 'bg-gold/10 text-gold group-hover:bg-gold group-hover:text-white'}`}>
+                  <Users size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Gestión de Usuarios</span>
+              </Link>
               
               <Link 
                 to="/admin/productos" 
@@ -169,6 +182,14 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <ClipboardList size={20} />
             <span>Pedidos Recientes</span>
+          </Link>
+          <Link 
+            to="/admin/usuarios" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/usuarios') ? 'bg-lightblue text-navy font-medium' : 'hover:bg-white/10 text-white/80'}`}
+          >
+            <Users size={20} />
+            <span>Gestión de Usuarios</span>
           </Link>
           <Link 
             to="/admin/productos" 
@@ -337,6 +358,8 @@ const AdminProducts = () => {
     description: '',
     category: 'Quesos Nacionales',
     price: '',
+    stock: '0',
+    is_active: true,
     image: '',
     secondaryImages: [] as string[]
   });
@@ -398,13 +421,15 @@ const AdminProducts = () => {
           description: formData.description,
           category: finalCategory,
           price: parseFloat(formData.price),
+          stock: parseInt(formData.stock),
+          is_active: formData.is_active,
           image: formData.image,
           secondaryImages: formData.secondaryImages
         });
         
         setEditingProduct(null);
         setIsAdding(false);
-        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', stock: '0', is_active: true, image: '', secondaryImages: [] });
         setIsCustomCategory(false);
         setCustomCategory('');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -414,12 +439,14 @@ const AdminProducts = () => {
           description: formData.description,
           category: finalCategory,
           price: parseFloat(formData.price),
+          stock: parseInt(formData.stock),
+          is_active: formData.is_active,
           image: formData.image,
           secondaryImages: formData.secondaryImages
         });
         
         setLastAddedProduct(newProduct);
-        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+        setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', stock: '0', is_active: true, image: '', secondaryImages: [] });
         setIsCustomCategory(false);
         setCustomCategory('');
         window.scrollTo({ top: 0, behavior: 'smooth' });
@@ -453,6 +480,8 @@ const AdminProducts = () => {
       description: product.description,
       category: product.category || 'Quesos Nacionales',
       price: product.price.toString(),
+      stock: product.stock.toString(),
+      is_active: product.is_active,
       image: product.image,
       secondaryImages: product.secondaryImages || []
     });
@@ -482,7 +511,7 @@ const AdminProducts = () => {
       <div className="flex justify-between items-center">
         <div>
           <h1 className="text-3xl font-serif text-navy mb-2">Gestión de Productos</h1>
-          <p className="text-darkgray/70">Administra el catálogo de tu tienda.</p>
+          <p className="text-darkgray/70">Administra el catálogo de tu tienda. Total: <span className="font-bold text-navy">{products.length} productos</span></p>
         </div>
         <button 
           onClick={() => {
@@ -587,6 +616,29 @@ const AdminProducts = () => {
                   className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
                   placeholder="0.00"
                 />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-2">Stock</label>
+                <input 
+                  type="number" 
+                  required
+                  value={formData.stock}
+                  onChange={e => setFormData({...formData, stock: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
+                  placeholder="0"
+                />
+              </div>
+              <div className="md:col-span-2 flex items-center space-x-3 bg-gray-50 p-4 rounded-lg">
+                <input 
+                  type="checkbox" 
+                  id="is_active"
+                  checked={formData.is_active}
+                  onChange={e => setFormData({...formData, is_active: e.target.checked})}
+                  className="w-5 h-5 text-lightblue rounded focus:ring-lightblue"
+                />
+                <label htmlFor="is_active" className="text-sm font-medium text-gray-700 cursor-pointer">
+                  Producto Activo (Visible en la tienda)
+                </label>
               </div>
               <div className="md:col-span-2">
                 <label className="block text-sm font-medium text-gray-700 mb-2">Imagen Principal</label>
@@ -713,6 +765,8 @@ const AdminProducts = () => {
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Producto</th>
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Categoría</th>
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Precio</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Stock</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acciones</th>
               </tr>
             </thead>
@@ -727,6 +781,16 @@ const AdminProducts = () => {
                   </td>
                   <td className="px-6 py-4 text-sm text-gray-600">{product.category || 'Sin categoría'}</td>
                   <td className="px-6 py-4 text-sm font-medium text-[#85A854]">${product.price.toFixed(2)}</td>
+                  <td className="px-6 py-4 text-sm text-gray-600">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.stock > 10 ? 'bg-green-50 text-green-700' : 'bg-red-50 text-red-700'}`}>
+                      {product.stock} unidades
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm">
+                    <span className={`px-2 py-1 rounded-full text-xs font-medium ${product.is_active ? 'bg-blue-50 text-blue-700' : 'bg-gray-100 text-gray-600'}`}>
+                      {product.is_active ? 'Activo' : 'Inactivo'}
+                    </span>
+                  </td>
                   <td className="px-6 py-4 text-sm">
                     <div className="flex items-center space-x-4">
                       <button 
@@ -765,103 +829,260 @@ const AdminProducts = () => {
   );
 };
 
-const mockOrders = [
-  {
-    id: 'ORD-001',
-    customer: 'Carlos Mendoza',
-    phone: '+52 55 1234 5678',
-    email: 'carlos@example.com',
-    date: '2026-03-23 10:30 AM',
-    total: 32.00,
-    status: 'Completado',
-    products: [
-      { name: 'Queso Manchego Curado', qty: 2, price: 11.00 },
-      { name: 'Salchicha Ahumada Premium', qty: 1, price: 10.00 }
-    ]
-  },
-  {
-    id: 'ORD-002',
-    customer: 'Ana Sofía López',
-    phone: '+52 55 8765 4321',
-    email: 'ana.sofia@example.com',
-    date: '2026-03-23 11:15 AM',
-    total: 45.50,
-    status: 'Pendiente',
-    products: [
-      { name: 'Jamón Ibérico de Bellota', qty: 1, price: 45.50 }
-    ]
-  },
-  {
-    id: 'ORD-003',
-    customer: 'Roberto Gómez',
-    phone: '+52 33 9876 5432',
-    email: 'roberto.g@example.com',
-    date: '2026-03-23 02:45 PM',
-    total: 38.00,
-    status: 'Enviado',
-    products: [
-      { name: 'Prosciutto di Parma', qty: 1, price: 38.00 }
-    ]
-  },
-];
-
 const AdminOrders = () => {
+  const { orders, updateOrderStatus } = useOrders();
+  const [selectedOrder, setSelectedOrder] = useState<Order | null>(null);
+
+  const getStatusColor = (status: string) => {
+    switch (status) {
+      case 'pendiente': return 'bg-orange-100 text-orange-700';
+      case 'en proceso': return 'bg-blue-100 text-blue-700';
+      case 'completado': return 'bg-green-100 text-green-700';
+      case 'cancelado': return 'bg-red-100 text-red-700';
+      default: return 'bg-gray-100 text-gray-700';
+    }
+  };
+
   return (
     <div className="space-y-8">
-      <div>
-        <h1 className="text-3xl font-serif text-navy mb-2">Pedidos Recientes</h1>
-        <p className="text-darkgray/70">Revisa las últimas ventas y los detalles de tus clientes.</p>
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-serif text-navy mb-2">Pedidos Recientes</h1>
+          <p className="text-darkgray/70">Gestiona las órdenes de tus clientes.</p>
+        </div>
       </div>
 
-      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
-            <thead>
-              <tr className="bg-gray-50 border-b border-gray-100">
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID Pedido</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Productos</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
-                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-gray-100">
-              {mockOrders.map(order => (
-                <tr key={order.id} className="hover:bg-gray-50 transition-colors">
-                  <td className="px-6 py-4">
-                    <span className="font-medium text-navy">{order.id}</span>
-                    <div className="text-xs text-gray-500 mt-1">{order.date}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <div className="font-medium text-gray-900">{order.customer}</div>
-                    <div className="text-xs text-gray-500 mt-1">{order.phone}</div>
-                    <div className="text-xs text-gray-500">{order.email}</div>
-                  </td>
-                  <td className="px-6 py-4">
-                    <ul className="text-sm text-gray-600 space-y-1">
-                      {order.products.map((p, idx) => (
-                        <li key={idx} className="flex items-center">
-                          <span className="w-4 h-4 rounded-full bg-gray-200 text-[10px] flex items-center justify-center mr-2">{p.qty}</span>
-                          {p.name}
-                        </li>
-                      ))}
-                    </ul>
-                  </td>
-                  <td className="px-6 py-4 text-sm font-medium text-[#85A854]">${order.total.toFixed(2)}</td>
-                  <td className="px-6 py-4">
-                    <span className={`px-3 py-1 rounded-full text-xs font-medium ${
-                      order.status === 'Completado' ? 'bg-green-100 text-green-700' :
-                      order.status === 'Pendiente' ? 'bg-yellow-100 text-yellow-700' :
-                      'bg-blue-100 text-blue-700'
-                    }`}>
-                      {order.status}
-                    </span>
-                  </td>
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
+        {/* Orders List */}
+        <div className="lg:col-span-2 bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
+              <thead>
+                <tr className="bg-gray-50 border-b border-gray-100">
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">ID / Fecha</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Cliente</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Total</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Estado</th>
+                  <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Acción</th>
                 </tr>
-              ))}
-            </tbody>
-          </table>
+              </thead>
+              <tbody className="divide-y divide-gray-100">
+                {orders.map(order => (
+                  <tr 
+                    key={order.id} 
+                    className={`hover:bg-gray-50 transition-colors cursor-pointer ${selectedOrder?.id === order.id ? 'bg-blue-50/30' : ''}`}
+                    onClick={() => setSelectedOrder(order)}
+                  >
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-navy">#{order.id}</div>
+                      <div className="text-xs text-gray-400">{new Date(order.created_at).toLocaleDateString()}</div>
+                    </td>
+                    <td className="px-6 py-4">
+                      <div className="text-sm font-medium text-gray-900">{order.customer_name}</div>
+                      <div className="text-xs text-gray-500 truncate max-w-[150px]">{order.customer_address}</div>
+                    </td>
+                    <td className="px-6 py-4 text-sm font-bold text-navy">${order.total.toFixed(2)}</td>
+                    <td className="px-6 py-4">
+                      <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${getStatusColor(order.status)}`}>
+                        {order.status}
+                      </span>
+                    </td>
+                    <td className="px-6 py-4">
+                      <button className="text-lightblue hover:text-navy transition-colors text-sm font-medium">Detalles</button>
+                    </td>
+                  </tr>
+                ))}
+              </tbody>
+            </table>
+          </div>
         </div>
+
+        {/* Order Details Panel */}
+        <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 h-fit sticky top-8">
+          {selectedOrder ? (
+            <div className="space-y-6">
+              <div className="flex justify-between items-start">
+                <h3 className="text-xl font-serif text-navy">Detalle del Pedido #{selectedOrder.id}</h3>
+                <button onClick={() => setSelectedOrder(null)} className="text-gray-400 hover:text-navy">
+                  <X size={20} />
+                </button>
+              </div>
+
+              <div className="space-y-4">
+                <div className="bg-gray-50 p-4 rounded-lg">
+                  <p className="text-xs uppercase tracking-widest text-gray-400 mb-2">Información del Cliente</p>
+                  <p className="font-medium text-navy">{selectedOrder.customer_name}</p>
+                  <p className="text-sm text-gray-600 mt-1">{selectedOrder.customer_address}</p>
+                </div>
+
+                <div>
+                  <p className="text-xs uppercase tracking-widest text-gray-400 mb-3">Productos</p>
+                  <div className="space-y-3">
+                    {selectedOrder.items?.map((item, idx) => (
+                      <div key={idx} className="flex justify-between text-sm">
+                        <span className="text-gray-600">{item.quantity}x {item.product_name || 'Producto'}</span>
+                        <span className="font-medium text-navy">${(item.price * item.quantity).toFixed(2)}</span>
+                      </div>
+                    ))}
+                  </div>
+                  <div className="border-t border-gray-100 mt-4 pt-4 flex justify-between font-bold text-lg text-navy">
+                    <span>Total</span>
+                    <span>${selectedOrder.total.toFixed(2)}</span>
+                  </div>
+                </div>
+
+                <div className="pt-4">
+                  <label className="block text-xs uppercase tracking-widest text-gray-400 mb-2">Cambiar Estado</label>
+                  <div className="grid grid-cols-2 gap-2">
+                    {(['pendiente', 'en proceso', 'completado', 'cancelado'] as const).map(status => (
+                      <button
+                        key={status}
+                        onClick={() => updateOrderStatus(selectedOrder.id, status)}
+                        className={`px-3 py-2 rounded text-xs font-bold uppercase tracking-wider transition-all ${selectedOrder.status === status ? getStatusColor(status) + ' ring-1 ring-current' : 'bg-gray-50 text-gray-400 hover:bg-gray-100'}`}
+                      >
+                        {status}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          ) : (
+            <div className="h-64 flex flex-col items-center justify-center text-center text-gray-400">
+              <ClipboardList size={48} className="mb-4 opacity-20" />
+              <p>Selecciona un pedido para ver los detalles</p>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+};
+
+const AdminUsers = () => {
+  const { users, registerUser } = useUsers();
+  const [isAdding, setIsAdding] = useState(false);
+  const [formData, setFormData] = useState({
+    email: '',
+    fullName: '',
+    role: 'user'
+  });
+  const [isSaving, setIsSaving] = useState(false);
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setIsSaving(true);
+    try {
+      await registerUser(formData.email, formData.fullName, formData.role);
+      setIsAdding(false);
+      setFormData({ email: '', fullName: '', role: 'user' });
+    } catch (err) {
+      alert('Error al registrar usuario');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  return (
+    <div className="space-y-8">
+      <div className="flex justify-between items-center">
+        <div>
+          <h1 className="text-3xl font-serif text-navy mb-2">Gestión de Usuarios</h1>
+          <p className="text-darkgray/70">Administra los usuarios registrados en el sistema.</p>
+        </div>
+        <button 
+          onClick={() => setIsAdding(!isAdding)}
+          className="flex items-center space-x-2 bg-navy text-white px-4 py-2 rounded-md hover:bg-lightblue hover:text-navy transition-colors"
+        >
+          {isAdding ? <X size={18} /> : <UserPlus size={18} />}
+          <span>{isAdding ? 'Cancelar' : 'Registrar Usuario'}</span>
+        </button>
+      </div>
+
+      {isAdding && (
+        <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl">
+          <h3 className="text-lg font-medium text-navy mb-6">Nuevo Usuario</h3>
+          <form onSubmit={handleSubmit} className="space-y-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Nombre Completo</label>
+                <input 
+                  type="text" 
+                  required
+                  value={formData.fullName}
+                  onChange={e => setFormData({...formData, fullName: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-lightblue"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Email</label>
+                <input 
+                  type="email" 
+                  required
+                  value={formData.email}
+                  onChange={e => setFormData({...formData, email: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-lightblue"
+                />
+              </div>
+              <div>
+                <label className="block text-sm font-medium text-gray-700 mb-1">Rol</label>
+                <select 
+                  value={formData.role}
+                  onChange={e => setFormData({...formData, role: e.target.value})}
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-lightblue"
+                >
+                  <option value="user">Usuario</option>
+                  <option value="admin">Administrador</option>
+                </select>
+              </div>
+            </div>
+            <div className="flex justify-end pt-4">
+              <button 
+                type="submit"
+                disabled={isSaving}
+                className="bg-navy text-white px-6 py-2 rounded-md hover:bg-lightblue hover:text-navy transition-all disabled:opacity-50"
+              >
+                {isSaving ? 'Registrando...' : 'Registrar'}
+              </button>
+            </div>
+          </form>
+        </div>
+      )}
+
+      <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
+        <table className="w-full text-left border-collapse">
+          <thead>
+            <tr className="bg-gray-50 border-b border-gray-100">
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
+              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-100">
+            {users.map(user => (
+              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                <td className="px-6 py-4">
+                  <div className="flex items-center space-x-3">
+                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-navy font-bold text-xs">
+                      {user.full_name.charAt(0)}
+                    </div>
+                    <span className="font-medium text-navy">{user.full_name}</span>
+                  </div>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                <td className="px-6 py-4">
+                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${user.role === 'admin' ? 'bg-gold/10 text-gold' : 'bg-gray-100 text-gray-600'}`}>
+                    {user.role}
+                  </span>
+                </td>
+                <td className="px-6 py-4 text-sm text-gray-400">
+                  {new Date(user.created_at).toLocaleDateString()}
+                </td>
+              </tr>
+            ))}
+          </tbody>
+        </table>
       </div>
     </div>
   );
@@ -875,6 +1096,7 @@ export const AdminRoutes = () => {
         <Route path="/ventas" element={<AdminSales />} />
         <Route path="/pedidos" element={<AdminOrders />} />
         <Route path="/productos" element={<AdminProducts />} />
+        <Route path="/usuarios" element={<AdminUsers />} />
       </Routes>
     </AdminLayout>
   );

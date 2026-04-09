@@ -9,6 +9,8 @@ export type Product = {
   secondaryImages?: string[];
   description: string;
   category?: string;
+  stock: number;
+  is_active: boolean;
 };
 
 type ProductContextType = {
@@ -52,7 +54,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
         image: p.image,
         secondaryImages: p.secondary_images,
         description: p.description,
-        category: p.category
+        category: p.category,
+        stock: p.stock || 0,
+        is_active: p.is_active !== undefined ? p.is_active : true
       }));
 
       setProducts(mappedProducts);
@@ -73,7 +77,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
           image: product.image,
           secondary_images: product.secondaryImages || [],
           description: product.description,
-          category: product.category
+          category: product.category,
+          stock: product.stock,
+          is_active: product.is_active
         }])
         .select();
 
@@ -87,7 +93,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
           image: data[0].image,
           secondaryImages: data[0].secondary_images,
           description: data[0].description,
-          category: data[0].category
+          category: data[0].category,
+          stock: data[0].stock,
+          is_active: data[0].is_active
         };
         setProducts(prev => [newProduct, ...prev]);
         return newProduct;
@@ -109,7 +117,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
           image: product.image,
           secondary_images: product.secondaryImages,
           description: product.description,
-          category: product.category
+          category: product.category,
+          stock: product.stock,
+          is_active: product.is_active
         })
         .eq('id', id)
         .select();
@@ -124,7 +134,9 @@ export const ProductProvider = ({ children }: { children: React.ReactNode }) => 
           image: data[0].image,
           secondaryImages: data[0].secondary_images,
           description: data[0].description,
-          category: data[0].category
+          category: data[0].category,
+          stock: data[0].stock,
+          is_active: data[0].is_active
         };
         setProducts(prev => prev.map(p => p.id === id ? updated : p));
         return updated;

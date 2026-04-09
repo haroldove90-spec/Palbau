@@ -8,6 +8,8 @@ import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award,
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { Product, ProductProvider, useProducts } from './context/ProductContext';
+import { OrderProvider } from './context/OrderContext';
+import { UserProvider } from './context/UserContext';
 import { AdminRoutes } from './pages/Admin';
 
 const ScrollToTop = () => {
@@ -953,25 +955,29 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <ProductProvider>
-          <CartProvider>
-            <Routes>
-              <Route path="/admin/*" element={<AdminRoutes />} />
-              <Route path="*" element={
-                <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
-                  <Header />
-                  <main className="flex-1">
-                    <Routes>
-                      <Route path="/" element={<HomePage />} />
-                      <Route path="/productos" element={<ProductsPage />} />
-                      <Route path="/producto/:id" element={<ProductPage />} />
-                    </Routes>
-                  </main>
-                  <Footer />
-                  <CartModal />
-                </div>
-              } />
-            </Routes>
-          </CartProvider>
+          <OrderProvider>
+            <UserProvider>
+              <CartProvider>
+                <Routes>
+                  <Route path="/admin/*" element={<AdminRoutes />} />
+                  <Route path="*" element={
+                    <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
+                      <Header />
+                      <main className="flex-1">
+                        <Routes>
+                          <Route path="/" element={<HomePage />} />
+                          <Route path="/productos" element={<ProductsPage />} />
+                          <Route path="/producto/:id" element={<ProductPage />} />
+                        </Routes>
+                      </main>
+                      <Footer />
+                      <CartModal />
+                    </div>
+                  } />
+                </Routes>
+              </CartProvider>
+            </UserProvider>
+          </OrderProvider>
         </ProductProvider>
       </Router>
     </ErrorBoundary>
