@@ -13,6 +13,7 @@ type UserContextType = {
   users: UserProfile[];
   fetchUsers: () => Promise<void>;
   registerUser: (email: string, fullName: string, role: string) => Promise<void>;
+  updateUser: (id: string, updates: Partial<UserProfile>) => Promise<void>;
 };
 
 const UserContext = createContext<UserContextType | null>(null);
@@ -46,16 +47,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
 
   const registerUser = async (email: string, fullName: string, role: string) => {
     try {
-      // Note: In a real app, you'd use supabase.auth.signUp
-      // For this admin panel, we'll just insert into profiles 
-      // assuming auth is handled separately or via a trigger
       const { error } = await supabase
         .from('profiles')
         .insert([{ 
           email, 
           full_name: fullName, 
           role,
-          id: crypto.randomUUID() // Placeholder ID if not using real auth signup here
+          id: crypto.randomUUID()
         }]);
 
       if (error) throw error;
@@ -66,8 +64,23 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const updateUser = async (id: string, updates: Partial<UserProfile>) => {
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update(updates)
+        .eq('id', id);
+
+      if (error) throw error;
+      await fetchUsers();
+    } catch (error) {
+      console.error('Error updating user:', error);
+      throw error;
+    }
+  };
+
   return (
-    <UserContext.Provider value={{ users, fetchUsers, registerUser }}>
+    <UserContext.Provider value={{ users, fetchUsers, registerUser, updateUser }}>
       {children}
     </UserContext.Provider>
   );

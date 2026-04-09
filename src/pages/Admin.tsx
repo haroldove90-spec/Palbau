@@ -580,7 +580,7 @@ const AdminProducts = () => {
             if (isAdding) {
               setIsAdding(false);
               setEditingProduct(null);
-              setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', image: '', secondaryImages: [] });
+              setFormData({ name: '', description: '', category: 'Quesos Nacionales', price: '', stock: '0', is_active: true, image: '', secondaryImages: [] });
             } else {
               setIsAdding(true);
             }
@@ -1020,8 +1020,9 @@ const AdminOrders = () => {
 };
 
 const AdminUsers = () => {
-  const { users, registerUser } = useUsers();
+  const { users, registerUser, updateUser } = useUsers();
   const [isAdding, setIsAdding] = useState(false);
+  const [editingUser, setEditingUser] = useState<UserProfile | null>(null);
   const [formData, setFormData] = useState({
     email: '',
     fullName: '',
@@ -1033,14 +1034,29 @@ const AdminUsers = () => {
     e.preventDefault();
     setIsSaving(true);
     try {
-      await registerUser(formData.email, formData.fullName, formData.role);
+      if (editingUser) {
+        await updateUser(editingUser.id, { role: formData.role, full_name: formData.fullName });
+        setEditingUser(null);
+      } else {
+        await registerUser(formData.email, formData.fullName, formData.role);
+      }
       setIsAdding(false);
       setFormData({ email: '', fullName: '', role: 'user' });
     } catch (err) {
-      alert('Error al registrar usuario');
+      alert(editingUser ? 'Error al actualizar usuario' : 'Error al registrar usuario');
     } finally {
       setIsSaving(false);
     }
+  };
+
+  const handleEdit = (user: UserProfile) => {
+    setEditingUser(user);
+    setFormData({
+      email: user.email,
+      fullName: user.full_name,
+      role: user.role
+    });
+    setIsAdding(true);
   };
 
   return (
@@ -1051,7 +1067,15 @@ const AdminUsers = () => {
           <p className="text-darkgray/70">Administra los usuarios registrados en el sistema.</p>
         </div>
         <button 
-          onClick={() => setIsAdding(!isAdding)}
+          onClick={() => {
+            if (isAdding) {
+              setIsAdding(false);
+              setEditingUser(null);
+              setFormData({ email: '', fullName: '', role: 'user' });
+            } else {
+              setIsAdding(true);
+            }
+          }}
           className="flex items-center space-x-2 bg-navy text-white px-4 py-2 rounded-md hover:bg-lightblue hover:text-navy transition-colors"
         >
           {isAdding ? <X size={18} /> : <UserPlus size={18} />}
@@ -1061,7 +1085,9 @@ const AdminUsers = () => {
 
       {isAdding && (
         <div className="bg-white p-6 rounded-xl shadow-sm border border-gray-100 max-w-2xl">
-          <h3 className="text-lg font-medium text-navy mb-6">Nuevo Usuario</h3>
+          <h3 className="text-lg font-medium text-navy mb-6">
+            {editingUser ? `Editando Rol: ${editingUser.full_name}` : 'Nuevo Usuario'}
+          </h3>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
@@ -1079,9 +1105,10 @@ const AdminUsers = () => {
                 <input 
                   type="email" 
                   required
+                  disabled={!!editingUser}
                   value={formData.email}
                   onChange={e => setFormData({...formData, email: e.target.value})}
-                  className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-lightblue"
+                  className="w-full border border-gray-300 rounded-md px-4 py-2 outline-none focus:ring-2 focus:ring-lightblue disabled:bg-gray-50 disabled:text-gray-400"
                 />
               </div>
               <div>
@@ -1102,7 +1129,7 @@ const AdminUsers = () => {
                 disabled={isSaving}
                 className="bg-navy text-white px-6 py-2 rounded-md hover:bg-lightblue hover:text-navy transition-all disabled:opacity-50"
               >
-                {isSaving ? 'Registrando...' : 'Registrar'}
+                {isSaving ? 'Guardando...' : (editingUser ? 'Actualizar' : 'Registrar')}
               </button>
             </div>
           </form>
@@ -1110,39 +1137,50 @@ const AdminUsers = () => {
       )}
 
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <table className="w-full text-left border-collapse">
-          <thead>
-            <tr className="bg-gray-50 border-b border-gray-100">
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
-              <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Registro</th>
-            </tr>
-          </thead>
-          <tbody className="divide-y divide-gray-100">
-            {users.map(user => (
-              <tr key={user.id} className="hover:bg-gray-50 transition-colors">
-                <td className="px-6 py-4">
-                  <div className="flex items-center space-x-3">
-                    <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-navy font-bold text-xs">
-                      {user.full_name.charAt(0)}
-                    </div>
-                    <span className="font-medium text-navy">{user.full_name}</span>
-                  </div>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
-                <td className="px-6 py-4">
-                  <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${user.role === 'admin' ? 'bg-gold/10 text-gold' : 'bg-gray-100 text-gray-600'}`}>
-                    {user.role}
-                  </span>
-                </td>
-                <td className="px-6 py-4 text-sm text-gray-400">
-                  {new Date(user.created_at).toLocaleDateString()}
-                </td>
+        <div className="overflow-x-auto">
+          <table className="w-full text-left border-collapse">
+            <thead>
+              <tr className="bg-gray-50 border-b border-gray-100">
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Usuario</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Email</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Rol</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Fecha Registro</th>
+                <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider text-right">Acciones</th>
               </tr>
-            ))}
-          </tbody>
-        </table>
+            </thead>
+            <tbody className="divide-y divide-gray-100">
+              {users.map(user => (
+                <tr key={user.id} className="hover:bg-gray-50 transition-colors">
+                  <td className="px-6 py-4">
+                    <div className="flex items-center space-x-3">
+                      <div className="w-8 h-8 bg-gray-100 rounded-full flex items-center justify-center text-navy font-bold text-xs">
+                        {user.full_name.charAt(0)}
+                      </div>
+                      <span className="font-medium text-navy">{user.full_name}</span>
+                    </div>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-600">{user.email}</td>
+                  <td className="px-6 py-4">
+                    <span className={`px-2 py-1 rounded-full text-[10px] font-bold uppercase tracking-wider ${user.role === 'admin' ? 'bg-gold/10 text-gold' : 'bg-gray-100 text-gray-600'}`}>
+                      {user.role}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 text-sm text-gray-400">
+                    {new Date(user.created_at).toLocaleDateString()}
+                  </td>
+                  <td className="px-6 py-4 text-right">
+                    <button 
+                      onClick={() => handleEdit(user)}
+                      className="text-lightblue hover:text-navy transition-colors text-sm font-medium"
+                    >
+                      Editar
+                    </button>
+                  </td>
+                </tr>
+              ))}
+            </tbody>
+          </table>
+        </div>
       </div>
     </div>
   );
@@ -1153,6 +1191,7 @@ const AdminCategories = () => {
   const [isFormOpen, setIsFormOpen] = useState(false);
   const [isSaving, setIsSaving] = useState(false);
   const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  const [imageWarning, setImageWarning] = useState<string | undefined>(undefined);
   
   const [formData, setFormData] = useState({
     name: '',
@@ -1160,10 +1199,64 @@ const AdminCategories = () => {
     image: ''
   });
 
+  const processImage = (file: File, targetSize: number = 1200): Promise<{url: string, warning?: string}> => {
+    return new Promise((resolve) => {
+      const reader = new FileReader();
+      reader.onload = (e) => {
+        const img = new Image();
+        img.onload = () => {
+          let warning = undefined;
+          if (img.width < 400 || img.height < 400) {
+            warning = 'La imagen es un poco pequeña, podría verse borrosa.';
+          } else if (img.width > 4000 || img.height > 4000) {
+            warning = 'La imagen es muy grande, la hemos optimizado para la web.';
+          }
+
+          const canvas = document.createElement('canvas');
+          let width = img.width;
+          let height = img.height;
+
+          if (width > height) {
+            if (width > targetSize) {
+              height *= targetSize / width;
+              width = targetSize;
+            }
+          } else {
+            if (height > targetSize) {
+              width *= targetSize / height;
+              height = targetSize;
+            }
+          }
+
+          canvas.width = width;
+          canvas.height = height;
+          const ctx = canvas.getContext('2d');
+          ctx?.drawImage(img, 0, 0, width, height);
+          
+          resolve({
+            url: canvas.toDataURL('image/jpeg', 0.8),
+            warning
+          });
+        };
+        img.src = e.target?.result as string;
+      };
+      reader.readAsDataURL(file);
+    });
+  };
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (file) {
+      const { url, warning } = await processImage(file);
+      setFormData(prev => ({ ...prev, image: url }));
+      setImageWarning(warning);
+    }
+  };
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!formData.name || !formData.image) {
-      alert('Por favor, completa el nombre y la imagen.');
+      alert('Por favor, completa el nombre y selecciona una imagen.');
       return;
     }
 
@@ -1177,6 +1270,7 @@ const AdminCategories = () => {
       setIsFormOpen(false);
       setFormData({ name: '', description: '', image: '' });
       setEditingCategory(null);
+      setImageWarning(undefined);
     } catch (error) {
       console.error('Error saving category:', error);
       alert('Error al guardar la categoría.');
@@ -1192,6 +1286,7 @@ const AdminCategories = () => {
       description: cat.description,
       image: cat.image
     });
+    setImageWarning(undefined);
     setIsFormOpen(true);
   };
 
@@ -1207,19 +1302,20 @@ const AdminCategories = () => {
   };
 
   return (
-    <div className="p-4 md:p-8">
-      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+    <div className="p-4 md:p-8 max-w-7xl mx-auto">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between mb-8 gap-4">
         <div>
           <h2 className="text-2xl md:text-3xl font-serif text-navy">Gestión de Categorías</h2>
-          <p className="text-darkgray/60 mt-1">Administra las categorías destacadas que se muestran en el inicio.</p>
+          <p className="text-darkgray/60 mt-1 text-sm md:text-base">Administra las categorías destacadas que se muestran en el inicio.</p>
         </div>
         <button 
           onClick={() => {
             setEditingCategory(null);
             setFormData({ name: '', description: '', image: '' });
+            setImageWarning(undefined);
             setIsFormOpen(true);
           }}
-          className="flex items-center justify-center space-x-2 bg-gold hover:bg-gold/90 text-navy font-bold px-6 py-3 rounded-md transition-all shadow-md shadow-gold/20"
+          className="flex items-center justify-center space-x-2 bg-gold hover:bg-gold/90 text-navy font-bold px-6 py-3 rounded-md transition-all shadow-md shadow-gold/20 w-full sm:w-auto"
         >
           <PlusCircle size={20} />
           <span>Nueva Categoría</span>
@@ -1243,51 +1339,86 @@ const AdminCategories = () => {
 
             <form onSubmit={handleSubmit} className="space-y-6">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                <div>
-                  <label className="block text-sm font-medium text-navy mb-2">Nombre de la Categoría</label>
-                  <input 
-                    type="text" 
-                    value={formData.name}
-                    onChange={(e) => setFormData({...formData, name: e.target.value})}
-                    placeholder="Ej. Quesos Gourmet"
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors"
-                  />
+                <div className="space-y-6">
+                  <div>
+                    <label className="block text-sm font-medium text-navy mb-2">Nombre de la Categoría</label>
+                    <input 
+                      type="text" 
+                      value={formData.name}
+                      onChange={(e) => setFormData({...formData, name: e.target.value})}
+                      placeholder="Ej. Quesos Gourmet"
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors"
+                    />
+                  </div>
+                  <div>
+                    <label className="block text-sm font-medium text-navy mb-2">Descripción</label>
+                    <textarea 
+                      value={formData.description}
+                      onChange={(e) => setFormData({...formData, description: e.target.value})}
+                      rows={4}
+                      placeholder="Breve descripción de la categoría..."
+                      className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors resize-none"
+                    />
+                  </div>
                 </div>
+
                 <div>
-                  <label className="block text-sm font-medium text-navy mb-2">URL de la Imagen</label>
-                  <input 
-                    type="text" 
-                    value={formData.image}
-                    onChange={(e) => setFormData({...formData, image: e.target.value})}
-                    placeholder="https://..."
-                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors"
-                  />
+                  <label className="block text-sm font-medium text-navy mb-2">Imagen de la Categoría</label>
+                  <div className="flex flex-col space-y-4">
+                    <div className="relative group">
+                      <label className="flex flex-col items-center justify-center w-full h-48 border-2 border-gray-300 border-dashed rounded-lg cursor-pointer bg-gray-50 hover:bg-gray-100 transition-colors overflow-hidden">
+                        {formData.image ? (
+                          <div className="relative w-full h-full">
+                            <img src={formData.image} alt="Preview" className="w-full h-full object-cover" />
+                            <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                              <UploadCloud className="w-8 h-8 text-white" />
+                              <span className="ml-2 text-white font-medium">Cambiar imagen</span>
+                            </div>
+                          </div>
+                        ) : (
+                          <div className="flex flex-col items-center justify-center pt-5 pb-6">
+                            <UploadCloud className="w-10 h-10 mb-3 text-gray-400" />
+                            <p className="mb-2 text-sm text-gray-500"><span className="font-semibold">Haz clic para subir</span></p>
+                            <p className="text-xs text-gray-400 text-center px-4">PNG, JPG o WEBP (Optimizada automáticamente)</p>
+                          </div>
+                        )}
+                        <input type="file" className="hidden" accept="image/*" onChange={handleImageChange} />
+                      </label>
+                      {formData.image && (
+                        <button 
+                          type="button"
+                          onClick={() => {
+                            setFormData(prev => ({ ...prev, image: '' }));
+                            setImageWarning(undefined);
+                          }}
+                          className="absolute -top-2 -right-2 bg-red text-white rounded-full p-1 shadow-md hover:scale-110 transition-transform"
+                        >
+                          <X size={16} />
+                        </button>
+                      )}
+                    </div>
+                    {imageWarning && (
+                      <p className="text-xs text-orange-500 font-medium flex items-center">
+                        <AlertCircle size={14} className="mr-1" />
+                        {imageWarning}
+                      </p>
+                    )}
+                  </div>
                 </div>
               </div>
 
-              <div>
-                <label className="block text-sm font-medium text-navy mb-2">Descripción</label>
-                <textarea 
-                  value={formData.description}
-                  onChange={(e) => setFormData({...formData, description: e.target.value})}
-                  rows={3}
-                  placeholder="Breve descripción de la categoría..."
-                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors resize-none"
-                />
-              </div>
-
-              <div className="flex justify-end space-x-4">
+              <div className="flex flex-col sm:flex-row justify-end gap-4 pt-4 border-t border-gray-100">
                 <button 
                   type="button"
                   onClick={() => setIsFormOpen(false)}
-                  className="px-6 py-3 text-darkgray hover:text-red transition-colors font-medium"
+                  className="px-6 py-3 text-darkgray hover:text-red transition-colors font-medium order-2 sm:order-1"
                 >
                   Cancelar
                 </button>
                 <button 
                   type="submit"
                   disabled={isSaving}
-                  className="flex items-center space-x-2 bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue transition-colors disabled:opacity-50"
+                  className="flex items-center justify-center space-x-2 bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue hover:text-navy transition-colors disabled:opacity-50 order-1 sm:order-2 w-full sm:w-auto"
                 >
                   {isSaving ? <Clock className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
                   <span>{isSaving ? 'Guardando...' : (editingCategory ? 'Actualizar Categoría' : 'Guardar Categoría')}</span>
@@ -1298,21 +1429,23 @@ const AdminCategories = () => {
         )}
       </AnimatePresence>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
         {categories.map((cat) => (
-          <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group">
+          <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-md transition-shadow">
             <div className="h-48 relative overflow-hidden">
               <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <div className="absolute top-4 right-4 flex space-x-2">
                 <button 
                   onClick={() => handleEdit(cat)}
                   className="p-2 bg-white/90 backdrop-blur-sm text-navy rounded-full shadow-sm hover:bg-gold hover:text-white transition-all"
+                  title="Editar"
                 >
                   <PlusCircle size={18} />
                 </button>
                 <button 
                   onClick={() => handleDelete(cat.id)}
-                  className="p-2 bg-white/90 backdrop-blur-sm text-red-500 rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-all"
+                  className="p-2 bg-white/90 backdrop-blur-sm text-red rounded-full shadow-sm hover:bg-red hover:text-white transition-all"
+                  title="Eliminar"
                 >
                   <Trash2 size={18} />
                 </button>
