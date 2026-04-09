@@ -8,7 +8,7 @@ import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award,
 import { motion, AnimatePresence } from 'motion/react';
 import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
 import { Product, ProductProvider, useProducts } from './context/ProductContext';
-import { OrderProvider } from './context/OrderContext';
+import { OrderProvider, useOrders } from './context/OrderContext';
 import { UserProvider } from './context/UserContext';
 import { AdminRoutes } from './pages/Admin';
 
@@ -611,11 +611,13 @@ const ProductPage = () => {
 
 const CartModal = () => {
   const { cart, isCartOpen, setIsCartOpen, removeFromCart, cartTotal } = useCart();
+  const { createOrder } = useOrders();
   const [customerName, setCustomerName] = useState('');
   const [customerAddress, setCustomerAddress] = useState('');
   const [isLoadingLocation, setIsLoadingLocation] = useState(false);
+  const [isProcessing, setIsProcessing] = useState(false);
 
-  const handleWhatsAppCheckout = () => {
+  const handleWhatsAppCheckout = async () => {
     if (cart.length === 0) return;
     if (!customerName.trim()) {
       alert('Por favor, ingresa tu nombre para continuar.');
@@ -626,16 +628,47 @@ const CartModal = () => {
       return;
     }
     
-    let message = `Hola! Soy *${customerName}*.\n`;
-    message += `Ubicación de entrega: ${customerAddress}\n\n`;
-    message += "Me gustaría realizar el siguiente pedido:\n\n";
-    cart.forEach(item => {
-      message += `- ${item.quantity}x ${item.product.name} ($${(item.product.price * item.quantity).toFixed(2)})\n`;
-    });
-    message += `\n*Total: $${cartTotal.toFixed(2)}*`;
-    
-    const encodedMessage = encodeURIComponent(message);
-    window.open(`https://wa.me/524431373266?text=${encodedMessage}`, '_blank');
+    try {
+      setIsProcessing(true);
+
+      // 1. Save to Supabase
+      const orderData = {
+        customer_name: customerName,
+        customer_address: customerAddress,
+        total: cartTotal
+      };
+
+      const orderItems = cart.map(item => ({
+        product_id: item.product.id,
+        quantity: item.quantity,
+        price: item.product.price
+      }));
+
+      await createOrder(orderData, orderItems);
+
+      // 2. Prepare WhatsApp message
+      let message = `Hola! Soy *${customerName}*.\n`;
+      message += `Ubicación de entrega: ${customerAddress}\n\n`;
+      message += "Me gustaría realizar el siguiente pedido:\n\n";
+      cart.forEach(item => {
+        message += `- ${item.quantity}x ${item.product.name} ($${(item.product.price * item.quantity).toFixed(2)})\n`;
+      });
+      message += `\n*Total: $${cartTotal.toFixed(2)}*`;
+      
+      const encodedMessage = encodeURIComponent(message);
+      
+      // 3. Open WhatsApp
+      window.open(`https://wa.me/524431373266?text=${encodedMessage}`, '_blank');
+      
+      // 4. Close cart (optional: clear cart)
+      setIsCartOpen(false);
+      // Note: You might want to clear the cart here too if useCart supports it
+    } catch (error) {
+      console.error('Error during checkout:', error);
+      alert('Hubo un error al procesar tu pedido. Por favor intenta de nuevo.');
+    } finally {
+      setIsProcessing(false);
+    }
   };
 
   const getRealLocation = () => {
@@ -747,10 +780,11 @@ const CartModal = () => {
                 </div>
                 <button 
                   onClick={handleWhatsAppCheckout}
-                  className="w-full py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-medium uppercase tracking-widest text-sm flex items-center justify-center space-x-2 transition-colors rounded-sm shadow-md"
+                  disabled={isProcessing}
+                  className="w-full py-4 bg-[#25D366] hover:bg-[#128C7E] text-white font-medium uppercase tracking-widest text-sm flex items-center justify-center space-x-2 transition-colors rounded-sm shadow-md disabled:opacity-50"
                 >
                   <MessageCircle size={20} />
-                  <span>Pedir por WhatsApp</span>
+                  <span>{isProcessing ? 'Procesando...' : 'Pedir por WhatsApp'}</span>
                 </button>
               </div>
             )}

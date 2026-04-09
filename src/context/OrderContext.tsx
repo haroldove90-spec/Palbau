@@ -24,6 +24,7 @@ type OrderContextType = {
   orders: Order[];
   updateOrderStatus: (id: number, status: Order['status']) => Promise<void>;
   fetchOrders: () => Promise<void>;
+  createOrder: (order: Omit<Order, 'id' | 'created_at' | 'status'>, items: Omit<OrderItem, 'id' | 'order_id'>[]) => Promise<void>;
 };
 
 const OrderContext = createContext<OrderContextType | null>(null);
@@ -98,8 +99,46 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
+  const createOrder = async (order: Omit<Order, 'id' | 'created_at' | 'status'>, items: Omit<OrderItem, 'id' | 'order_id'>[]) => {
+    try {
+      // 1. Create the order
+      const { data: orderData, error: orderError } = await supabase
+        .from('orders')
+        .insert([{
+          customer_name: order.customer_name,
+          customer_address: order.customer_address,
+          total: order.total,
+          status: 'pendiente'
+        }])
+        .select();
+
+      if (orderError) throw orderError;
+      const newOrderId = orderData[0].id;
+
+      // 2. Create the order items
+      const itemsToInsert = items.map(item => ({
+        order_id: newOrderId,
+        product_id: item.product_id,
+        quantity: item.quantity,
+        price: item.price
+      }));
+
+      const { error: itemsError } = await supabase
+        .from('order_items')
+        .insert(itemsToInsert);
+
+      if (itemsError) throw itemsError;
+
+      // 3. Refresh orders
+      await fetchOrders();
+    } catch (error) {
+      console.error('Error creating order:', error);
+      throw error;
+    }
+  };
+
   return (
-    <OrderContext.Provider value={{ orders, updateOrderStatus, fetchOrders }}>
+    <OrderContext.Provider value={{ orders, updateOrderStatus, fetchOrders, createOrder }}>
       {children}
     </OrderContext.Provider>
   );
