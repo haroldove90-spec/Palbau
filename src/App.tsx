@@ -472,6 +472,9 @@ const ProductsSection = () => {
   const { addToCart } = useCart();
   const { products } = useProducts();
   
+  // Duplicamos los productos para el efecto de scroll infinito
+  const displayProducts = [...products, ...products];
+  
   return (
     <section id="tienda" className="py-24 px-4 md:px-12 max-w-7xl mx-auto overflow-hidden">
       <div className="text-center mb-12 md:mb-16">
@@ -480,30 +483,47 @@ const ProductsSection = () => {
         <div className="w-12 h-[2px] bg-lightblue mx-auto" />
       </div>
       
-      <motion.div 
-        initial={{ x: 0 }}
-        animate={{ x: [0, -20, 0] }}
-        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
-        className="flex space-x-4 md:space-x-8 pb-8 overflow-x-auto scrollbar-hide"
-      >
-        {products.map(product => (
-          <div key={product.id} className="flex-shrink-0 w-64 md:w-72 flex flex-col items-center text-center group">
-            <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
-              <img src={product.image} alt={product.name} className="w-full h-40 md:h-64 object-cover transition-transform duration-700 group-hover:scale-105 rounded-md" />
-            </Link>
-            <Link to={`/producto/${product.id}`}>
-              <h4 className="text-sm md:text-xl font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
-            </Link>
-            <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
-            <button 
-              onClick={() => addToCart(product, 1)}
-              className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
-            >
-              Añadir al carrito
-            </button>
-          </div>
-        ))}
-      </motion.div>
+      <div className="relative group">
+        <motion.div 
+          animate={{ x: [0, "-50%"] }}
+          transition={{ 
+            duration: products.length * 3, 
+            repeat: Infinity, 
+            ease: "linear",
+            repeatType: "loop"
+          }}
+          className="flex space-x-4 md:space-x-8 pb-8"
+          style={{ width: "fit-content" }}
+        >
+          {displayProducts.map((product, idx) => (
+            <div key={`${product.id}-${idx}`} className="flex-shrink-0 w-64 md:w-72 flex flex-col items-center text-center group/item">
+              <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
+                <img src={product.image} alt={product.name} className="w-full h-40 md:h-64 object-cover transition-transform duration-700 group-hover/item:scale-105 rounded-md" />
+              </Link>
+              <Link to={`/producto/${product.id}`}>
+                <h4 className="text-sm md:text-xl font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
+              </Link>
+              <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
+              <button 
+                onClick={() => addToCart(product, 1)}
+                className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
+              >
+                Añadir al carrito
+              </button>
+            </div>
+          ))}
+        </motion.div>
+      </div>
+
+      <div className="mt-12 text-center">
+        <Link 
+          to="/productos" 
+          className="inline-flex items-center px-8 py-4 bg-navy text-white text-xs uppercase tracking-[0.2em] font-bold hover:bg-gold transition-all duration-300 shadow-lg hover:shadow-gold/20"
+        >
+          Ver más productos
+          <ChevronRight size={16} className="ml-2" />
+        </Link>
+      </div>
     </section>
   );
 };
