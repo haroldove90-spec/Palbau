@@ -3,6 +3,7 @@ import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
 import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
+import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
 import { useOrders, Order } from '../context/OrderContext';
 import { useUsers, UserProfile } from '../context/UserContext';
@@ -27,6 +28,20 @@ const mockCategoryData = [
 const AdminLayout = ({ children }: { children: React.ReactNode }) => {
   const location = useLocation();
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
+  const [isLoggingOut, setIsLoggingOut] = useState(false);
+
+  const handleLogout = async () => {
+    try {
+      setIsLoggingOut(true);
+      await supabase.auth.signOut();
+      window.location.href = '/';
+    } catch (error) {
+      console.error('Error logging out:', error);
+      window.location.href = '/';
+    } finally {
+      setIsLoggingOut(false);
+    }
+  };
   
   const isSupabaseConfigured = !!import.meta.env.VITE_SUPABASE_URL && !!import.meta.env.VITE_SUPABASE_ANON_KEY;
 
@@ -140,16 +155,16 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
               
               <div className="h-px bg-gray-200 my-4"></div>
               
-              <Link 
-                to="/" 
-                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
-                onClick={() => setIsMobileMenuOpen(false)}
+              <button 
+                onClick={handleLogout}
+                disabled={isLoggingOut}
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all disabled:opacity-50"
               >
-                <div className="w-12 h-12 rounded-xl bg-gray-100 text-gray-500 flex items-center justify-center group-hover:bg-gray-200 transition-colors">
-                  <Home size={24} strokeWidth={1.5} />
+                <div className="w-12 h-12 rounded-xl bg-red-50 text-red-500 flex items-center justify-center group-hover:bg-red-500 group-hover:text-white transition-colors">
+                  <LogOut size={24} strokeWidth={1.5} />
                 </div>
-                <span className="text-xl font-serif text-gray-600 font-medium">Volver a la Tienda</span>
-              </Link>
+                <span className="text-xl font-serif text-navy font-medium">{isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
+              </button>
             </nav>
             
             <div className="mt-auto text-center pb-8 relative z-10">
@@ -201,10 +216,14 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           </Link>
         </nav>
         <div className="p-4 border-t border-white/10 mt-auto">
-          <Link to="/" className="flex items-center space-x-3 px-4 py-3 rounded-md hover:bg-white/10 text-white/80 transition-colors">
+          <button 
+            onClick={handleLogout}
+            disabled={isLoggingOut}
+            className="w-full flex items-center space-x-3 px-4 py-3 rounded-md hover:bg-white/10 text-white/80 transition-colors disabled:opacity-50"
+          >
             <LogOut size={20} />
-            <span>Volver a la Tienda</span>
-          </Link>
+            <span>{isLoggingOut ? 'Cerrando...' : 'Cerrar Sesión'}</span>
+          </button>
         </div>
       </aside>
 
