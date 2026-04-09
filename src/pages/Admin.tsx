@@ -154,6 +154,19 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
               </Link>
               
               <div className="h-px bg-gray-200 my-4"></div>
+
+              <a 
+                href="/" 
+                target="_blank"
+                rel="noopener noreferrer"
+                className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
+                onClick={() => setIsMobileMenuOpen(false)}
+              >
+                <div className="w-12 h-12 rounded-xl bg-lightblue/10 text-lightblue flex items-center justify-center group-hover:bg-lightblue group-hover:text-white transition-colors">
+                  <ExternalLink size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Visitar Tienda</span>
+              </a>
               
               <button 
                 onClick={handleLogout}
@@ -182,6 +195,15 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           <p className="text-xs text-white/50 mt-1 uppercase tracking-widest">Panel de Control</p>
         </div>
         <nav className="flex-1 p-4 space-y-2 overflow-y-auto">
+          <a 
+            href="/" 
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex items-center space-x-3 px-4 py-3 rounded-md hover:bg-white/10 text-white/80 transition-colors mb-4 border border-white/10 bg-white/5"
+          >
+            <ExternalLink size={20} />
+            <span className="font-medium">Visitar Tienda</span>
+          </a>
           <Link 
             to="/admin/ventas" 
             onClick={() => setIsMobileMenuOpen(false)}
