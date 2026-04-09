@@ -6,10 +6,11 @@
 import React, { useState, useEffect, createContext, useContext, Component, ReactNode, ErrorInfo } from 'react';
 import { ShoppingCart, Menu, X, ChevronRight, ChevronLeft, MessageCircle, Award, HeartHandshake, Snowflake, Home, Store, Phone, Shield, MapPin, User } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
-import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation } from 'react-router-dom';
+import { BrowserRouter as Router, Routes, Route, Link, useParams, useLocation, useNavigate } from 'react-router-dom';
 import { Product, ProductProvider, useProducts } from './context/ProductContext';
 import { OrderProvider, useOrders } from './context/OrderContext';
 import { UserProvider } from './context/UserContext';
+import { CategoryProvider, useCategories } from './context/CategoryContext';
 import { AdminRoutes } from './pages/Admin';
 
 const ScrollToTop = () => {
@@ -115,7 +116,7 @@ const Header = () => {
         {/* Desktop Nav */}
         <nav className="hidden md:flex space-x-10 items-center">
           <Link to="/" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Inicio</Link>
-          <a href="/#tienda" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Tienda</a>
+          <Link to="/productos" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Tienda</Link>
           <a href="#contacto" className="text-xs uppercase tracking-[0.2em] text-navy transition-colors hover:text-lightblue">Contacto</a>
           <Link to="/admin" className="text-xs uppercase tracking-[0.2em] text-gold font-bold transition-colors hover:text-lightblue">Admin</Link>
         </nav>
@@ -181,8 +182,8 @@ const Header = () => {
                 <span className="text-xl font-serif text-navy font-medium">Inicio</span>
               </Link>
               
-              <a 
-                href="/#tienda" 
+              <Link 
+                to="/productos" 
                 className="group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all" 
                 onClick={() => setMobileMenuOpen(false)}
               >
@@ -190,7 +191,7 @@ const Header = () => {
                   <Store size={24} strokeWidth={1.5} />
                 </div>
                 <span className="text-xl font-serif text-navy font-medium">Tienda</span>
-              </a>
+              </Link>
               
               <a 
                 href="#contacto" 
@@ -378,28 +379,7 @@ const ValuesSection = () => {
 };
 
 const FeaturedCategories = () => {
-  const categories = [
-    {
-      name: "Jamones Selectos",
-      desc: "Variedad de jamones de pierna y pavo, con cortes precisos y texturas suaves, ideales para el consumo diario o eventos especiales.",
-      image: "https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcTYlrHP2bS6a45ZtldfT2N6oxyXqKMjG-XY7A&s"
-    },
-    {
-      name: "Salchichas Premium",
-      desc: "Elaboradas con recetas tradicionales, nuestras salchichas ofrecen la firmeza y el sabor especiado perfecto para parrilladas o desayunos.",
-      image: "https://images.unsplash.com/photo-1529692236671-f1f6cf9683ba?q=80&w=2070&auto=format&fit=crop"
-    },
-    {
-      name: "Quesos Nacionales",
-      desc: "Queso Oaxaca Tradicional y Queso Ranchero. Hechos con leche 100% pura, evocando la tradición del campo.",
-      image: "https://images.unsplash.com/photo-1486297678162-eb2a19b0a32d?q=80&w=2073&auto=format&fit=crop"
-    },
-    {
-      name: "Quesos Importados",
-      desc: "Manchego, Gouda y más. Una travesía por los sabores de Europa con diferentes meses de maduración y notas de nuez.",
-      image: "https://images.unsplash.com/photo-1452195100486-9cc805987862?q=80&w=2069&auto=format&fit=crop"
-    }
-  ];
+  const { categories } = useCategories();
 
   return (
     <section className="py-32 px-4 md:px-12 max-w-7xl mx-auto">
@@ -412,7 +392,7 @@ const FeaturedCategories = () => {
       <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-10 lg:gap-16">
         {categories.map((cat, idx) => (
           <motion.div 
-            key={idx}
+            key={cat.id || idx}
             whileHover={{ y: -8 }}
             transition={{ duration: 0.4 }}
             className="group cursor-pointer flex flex-col"
@@ -429,7 +409,7 @@ const FeaturedCategories = () => {
             <div className="text-center px-2 md:px-4">
               <h4 className="text-lg md:text-2xl font-serif text-navy mb-2 md:mb-4">{cat.name}</h4>
               <p className="text-darkgray/80 font-light text-xs md:text-sm leading-relaxed mb-4 md:mb-6 max-w-md mx-auto line-clamp-3 md:line-clamp-none">
-                {cat.desc}
+                {cat.description}
               </p>
               <Link to={`/productos?categoria=${encodeURIComponent(cat.name)}`} className="inline-flex items-center text-[10px] md:text-xs uppercase tracking-[0.2em] text-lightblue font-bold group-hover:text-red transition-colors">
                 Ver Productos <ChevronRight size={14} className="ml-1 md:ml-2 transition-transform group-hover:translate-x-1" />
@@ -493,16 +473,21 @@ const ProductsSection = () => {
   const { products } = useProducts();
   
   return (
-    <section id="tienda" className="py-24 px-4 md:px-12 max-w-7xl mx-auto">
+    <section id="tienda" className="py-24 px-4 md:px-12 max-w-7xl mx-auto overflow-hidden">
       <div className="text-center mb-12 md:mb-16">
         <h2 className="text-xs uppercase tracking-[0.3em] text-red mb-4 font-semibold">Nuestros Productos</h2>
-        <h3 className="text-3xl md:text-4xl font-serif text-navy mb-6">Selección Especial</h3>
+        <h3 className="text-3xl md:text-4xl font-serif text-navy mb-6">Productos nuevos</h3>
         <div className="w-12 h-[2px] bg-lightblue mx-auto" />
       </div>
       
-      <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-4 md:gap-8">
+      <motion.div 
+        initial={{ x: 0 }}
+        animate={{ x: [0, -20, 0] }}
+        transition={{ duration: 10, repeat: Infinity, ease: "linear" }}
+        className="flex space-x-4 md:space-x-8 pb-8 overflow-x-auto scrollbar-hide"
+      >
         {products.map(product => (
-          <div key={product.id} className="flex flex-col items-center text-center group">
+          <div key={product.id} className="flex-shrink-0 w-64 md:w-72 flex flex-col items-center text-center group">
             <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
               <img src={product.image} alt={product.name} className="w-full h-40 md:h-64 object-cover transition-transform duration-700 group-hover:scale-105 rounded-md" />
             </Link>
@@ -512,13 +497,13 @@ const ProductsSection = () => {
             <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
             <button 
               onClick={() => addToCart(product, 1)}
-              className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full md:w-auto"
+              className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
             >
               Añadir al carrito
             </button>
           </div>
         ))}
-      </div>
+      </motion.div>
     </section>
   );
 };
@@ -526,9 +511,11 @@ const ProductsSection = () => {
 const ProductPage = () => {
   const { id } = useParams();
   const { products } = useProducts();
+  const { categories } = useCategories();
   const product = products.find(p => p.id === Number(id));
   const { addToCart } = useCart();
   const [quantity, setQuantity] = useState(1);
+  const navigate = useNavigate();
 
   if (!product) return <div className="pt-40 text-center text-2xl">Producto no encontrado</div>;
 
@@ -597,10 +584,15 @@ const ProductPage = () => {
           <div>
             <h3 className="text-xl font-serif text-navy mb-6">Categorías de productos</h3>
             <ul className="space-y-4 text-darkgray/70 font-light">
-              <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Quesos Nacionales</li>
-              <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Quesos Importados</li>
-              <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Jamones Selectos</li>
-              <li className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors">Salchichas Premium</li>
+              {categories.map(cat => (
+                <li 
+                  key={cat.id} 
+                  onClick={() => navigate(`/productos?categoria=${encodeURIComponent(cat.name)}`)}
+                  className="border-b border-gray-100 pb-2 hover:text-lightblue cursor-pointer transition-colors"
+                >
+                  {cat.name}
+                </li>
+              ))}
             </ul>
           </div>
         </div>
@@ -859,8 +851,10 @@ const ContactSection = () => {
 
 const ProductsPage = () => {
   const { products } = useProducts();
+  const { categories } = useCategories();
   const { addToCart } = useCart();
   const location = useLocation();
+  const navigate = useNavigate();
   const searchParams = new URLSearchParams(location.search);
   const categoryFilter = searchParams.get('categoria');
 
@@ -881,35 +875,64 @@ const ProductsPage = () => {
         </p>
       </div>
 
-      {/* Product Grid */}
-      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16">
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6 md:gap-10">
-          {filteredProducts.length > 0 ? (
-            filteredProducts.map(product => (
-              <div key={product.id} className="flex flex-col items-center text-center group bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
-                <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
-                  <img src={product.image} alt={product.name} className="w-full h-40 md:h-56 object-cover transition-transform duration-700 group-hover:scale-105 rounded-sm" />
-                </Link>
-                <Link to={`/producto/${product.id}`}>
-                  <h4 className="text-sm md:text-lg font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
-                </Link>
-                <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
+      <div className="max-w-7xl mx-auto px-6 md:px-12 py-16 grid grid-cols-1 lg:grid-cols-12 gap-12">
+        {/* Sidebar */}
+        <div className="lg:col-span-3 space-y-8">
+          <div className="bg-white p-6 rounded-sm shadow-sm">
+            <h3 className="text-lg font-serif text-navy mb-6 border-b pb-2">Categorías</h3>
+            <ul className="space-y-3">
+              <li>
                 <button 
-                  onClick={() => addToCart(product, 1)}
-                  className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
+                  onClick={() => navigate('/productos')}
+                  className={`text-sm hover:text-lightblue transition-colors ${!categoryFilter ? 'text-lightblue font-bold' : 'text-darkgray/70'}`}
                 >
-                  Añadir al carrito
+                  Todos los Productos
                 </button>
+              </li>
+              {categories.map(cat => (
+                <li key={cat.id}>
+                  <button 
+                    onClick={() => navigate(`/productos?categoria=${encodeURIComponent(cat.name)}`)}
+                    className={`text-sm hover:text-lightblue transition-colors text-left ${categoryFilter === cat.name ? 'text-lightblue font-bold' : 'text-darkgray/70'}`}
+                  >
+                    {cat.name}
+                  </button>
+                </li>
+              ))}
+            </ul>
+          </div>
+        </div>
+
+        {/* Product Grid */}
+        <div className="lg:col-span-9">
+          <div className="grid grid-cols-2 md:grid-cols-3 gap-6">
+            {filteredProducts.length > 0 ? (
+              filteredProducts.map(product => (
+                <div key={product.id} className="flex flex-col items-center text-center group bg-white p-4 rounded-sm shadow-sm hover:shadow-md transition-shadow">
+                  <Link to={`/producto/${product.id}`} className="w-full relative overflow-hidden mb-4 md:mb-6">
+                    <img src={product.image} alt={product.name} className="w-full h-40 md:h-56 object-cover transition-transform duration-700 group-hover:scale-105 rounded-sm" />
+                  </Link>
+                  <Link to={`/producto/${product.id}`}>
+                    <h4 className="text-sm md:text-lg font-sans text-darkgray mb-1 md:mb-2 hover:text-lightblue transition-colors">{product.name}</h4>
+                  </Link>
+                  <p className="text-[#85A854] font-light text-sm md:text-base mb-4 md:mb-6">${product.price.toFixed(2)}</p>
+                  <button 
+                    onClick={() => addToCart(product, 1)}
+                    className="px-3 md:px-6 py-2 border border-darkgray text-darkgray text-xs md:text-sm hover:bg-darkgray hover:text-white transition-colors w-full"
+                  >
+                    Añadir al carrito
+                  </button>
+                </div>
+              ))
+            ) : (
+              <div className="col-span-full text-center py-20 text-darkgray/50">
+                <p className="text-xl">No se encontraron productos en esta categoría.</p>
+                <Link to="/productos" className="inline-block mt-6 px-6 py-2 border border-navy text-navy hover:bg-navy hover:text-white transition-colors">
+                  Ver todos los productos
+                </Link>
               </div>
-            ))
-          ) : (
-            <div className="col-span-full text-center py-20 text-darkgray/50">
-              <p className="text-xl">No se encontraron productos en esta categoría.</p>
-              <Link to="/productos" className="inline-block mt-6 px-6 py-2 border border-navy text-navy hover:bg-navy hover:text-white transition-colors">
-                Ver todos los productos
-              </Link>
-            </div>
-          )}
+            )}
+          </div>
         </div>
       </div>
     </div>
@@ -989,29 +1012,31 @@ export default function App() {
       <Router>
         <ScrollToTop />
         <ProductProvider>
-          <OrderProvider>
-            <UserProvider>
-              <CartProvider>
-                <Routes>
-                  <Route path="/admin/*" element={<AdminRoutes />} />
-                  <Route path="*" element={
-                    <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
-                      <Header />
-                      <main className="flex-1">
-                        <Routes>
-                          <Route path="/" element={<HomePage />} />
-                          <Route path="/productos" element={<ProductsPage />} />
-                          <Route path="/producto/:id" element={<ProductPage />} />
-                        </Routes>
-                      </main>
-                      <Footer />
-                      <CartModal />
-                    </div>
-                  } />
-                </Routes>
-              </CartProvider>
-            </UserProvider>
-          </OrderProvider>
+          <CategoryProvider>
+            <OrderProvider>
+              <UserProvider>
+                <CartProvider>
+                  <Routes>
+                    <Route path="/admin/*" element={<AdminRoutes />} />
+                    <Route path="*" element={
+                      <div className="min-h-screen bg-cream selection:bg-gold/30 selection:text-navy flex flex-col">
+                        <Header />
+                        <main className="flex-1">
+                          <Routes>
+                            <Route path="/" element={<HomePage />} />
+                            <Route path="/productos" element={<ProductsPage />} />
+                            <Route path="/producto/:id" element={<ProductPage />} />
+                          </Routes>
+                        </main>
+                        <Footer />
+                        <CartModal />
+                      </div>
+                    } />
+                  </Routes>
+                </CartProvider>
+              </UserProvider>
+            </OrderProvider>
+          </CategoryProvider>
         </ProductProvider>
       </Router>
     </ErrorBoundary>

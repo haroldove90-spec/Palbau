@@ -1,12 +1,13 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
 import { useOrders, Order } from '../context/OrderContext';
 import { useUsers, UserProfile } from '../context/UserContext';
+import { useCategories, Category } from '../context/CategoryContext';
 
 const mockSalesData = [
   { time: '08:00', sales: 120 },
@@ -152,6 +153,17 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                 </div>
                 <span className="text-xl font-serif text-navy font-medium">Gestión de Productos</span>
               </Link>
+
+              <Link 
+                to="/admin/categorias" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/categorias') ? 'ring-2 ring-gold/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/categorias') ? 'bg-gold text-white shadow-md shadow-gold/20' : 'bg-gold/10 text-gold group-hover:bg-gold group-hover:text-white'}`}>
+                  <Tags size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Gestión de Categorías</span>
+              </Link>
               
               <div className="h-px bg-gray-200 my-4"></div>
 
@@ -235,6 +247,14 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <PackagePlus size={20} />
             <span>Gestión de Productos</span>
+          </Link>
+          <Link 
+            to="/admin/categorias" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/categorias') ? 'bg-lightblue text-navy font-medium' : 'hover:bg-white/10 text-white/80'}`}
+          >
+            <Tags size={20} />
+            <span>Gestión de Categorías</span>
           </Link>
         </nav>
         <div className="p-4 border-t border-white/10 mt-auto">
@@ -341,6 +361,7 @@ const AdminSales = () => {
 
 const AdminProducts = () => {
   const { products, addProduct, updateProduct, deleteProduct } = useProducts();
+  const { categories } = useCategories();
   const [isAdding, setIsAdding] = useState(false);
   const [editingProduct, setEditingProduct] = useState<Product | null>(null);
   
@@ -528,7 +549,7 @@ const AdminProducts = () => {
     });
     
     // Check if category is custom
-    const standardCategories = ['Quesos Nacionales', 'Quesos Importados', 'Jamones Selectos', 'Salchichas Premium', 'Embutidos'];
+    const standardCategories = categories.map(c => c.name);
     if (product.category && !standardCategories.includes(product.category)) {
       setIsCustomCategory(true);
       setCustomCategory(product.category);
@@ -624,11 +645,9 @@ const AdminProducts = () => {
                     }}
                     className="w-full border border-gray-300 rounded-md px-4 py-2 focus:outline-none focus:ring-2 focus:ring-lightblue focus:border-transparent"
                   >
-                    <option value="Quesos Nacionales">Quesos Nacionales</option>
-                    <option value="Quesos Importados">Quesos Importados</option>
-                    <option value="Jamones Selectos">Jamones Selectos</option>
-                    <option value="Salchichas Premium">Salchichas Premium</option>
-                    <option value="Embutidos">Embutidos</option>
+                    {categories.map(cat => (
+                      <option key={cat.id} value={cat.name}>{cat.name}</option>
+                    ))}
                     <option value="custom">+ Nueva Categoría...</option>
                   </select>
                   
@@ -1129,6 +1148,187 @@ const AdminUsers = () => {
   );
 };
 
+const AdminCategories = () => {
+  const { categories, addCategory, updateCategory, deleteCategory } = useCategories();
+  const [isFormOpen, setIsFormOpen] = useState(false);
+  const [isSaving, setIsSaving] = useState(false);
+  const [editingCategory, setEditingCategory] = useState<Category | null>(null);
+  
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+    image: ''
+  });
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!formData.name || !formData.image) {
+      alert('Por favor, completa el nombre y la imagen.');
+      return;
+    }
+
+    try {
+      setIsSaving(true);
+      if (editingCategory) {
+        await updateCategory(editingCategory.id, formData);
+      } else {
+        await addCategory(formData);
+      }
+      setIsFormOpen(false);
+      setFormData({ name: '', description: '', image: '' });
+      setEditingCategory(null);
+    } catch (error) {
+      console.error('Error saving category:', error);
+      alert('Error al guardar la categoría.');
+    } finally {
+      setIsSaving(false);
+    }
+  };
+
+  const handleEdit = (cat: Category) => {
+    setEditingCategory(cat);
+    setFormData({
+      name: cat.name,
+      description: cat.description,
+      image: cat.image
+    });
+    setIsFormOpen(true);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm('¿Estás seguro de que deseas eliminar esta categoría?')) {
+      try {
+        await deleteCategory(id);
+      } catch (error) {
+        console.error('Error deleting category:', error);
+        alert('Error al eliminar la categoría.');
+      }
+    }
+  };
+
+  return (
+    <div className="p-4 md:p-8">
+      <div className="flex flex-col md:flex-row md:items-center justify-between mb-8 gap-4">
+        <div>
+          <h2 className="text-2xl md:text-3xl font-serif text-navy">Gestión de Categorías</h2>
+          <p className="text-darkgray/60 mt-1">Administra las categorías destacadas que se muestran en el inicio.</p>
+        </div>
+        <button 
+          onClick={() => {
+            setEditingCategory(null);
+            setFormData({ name: '', description: '', image: '' });
+            setIsFormOpen(true);
+          }}
+          className="flex items-center justify-center space-x-2 bg-gold hover:bg-gold/90 text-navy font-bold px-6 py-3 rounded-md transition-all shadow-md shadow-gold/20"
+        >
+          <PlusCircle size={20} />
+          <span>Nueva Categoría</span>
+        </button>
+      </div>
+
+      <AnimatePresence>
+        {isFormOpen && (
+          <motion.div 
+            initial={{ opacity: 0, y: -20 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, y: -20 }}
+            className="bg-white p-6 md:p-8 rounded-xl shadow-sm border border-gray-100 mb-8"
+          >
+            <div className="flex justify-between items-center mb-6">
+              <h3 className="text-xl font-serif text-navy">{editingCategory ? 'Editar Categoría' : 'Añadir Nueva Categoría'}</h3>
+              <button onClick={() => setIsFormOpen(false)} className="text-gray-400 hover:text-red transition-colors">
+                <X size={24} />
+              </button>
+            </div>
+
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-2">Nombre de la Categoría</label>
+                  <input 
+                    type="text" 
+                    value={formData.name}
+                    onChange={(e) => setFormData({...formData, name: e.target.value})}
+                    placeholder="Ej. Quesos Gourmet"
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors"
+                  />
+                </div>
+                <div>
+                  <label className="block text-sm font-medium text-navy mb-2">URL de la Imagen</label>
+                  <input 
+                    type="text" 
+                    value={formData.image}
+                    onChange={(e) => setFormData({...formData, image: e.target.value})}
+                    placeholder="https://..."
+                    className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors"
+                  />
+                </div>
+              </div>
+
+              <div>
+                <label className="block text-sm font-medium text-navy mb-2">Descripción</label>
+                <textarea 
+                  value={formData.description}
+                  onChange={(e) => setFormData({...formData, description: e.target.value})}
+                  rows={3}
+                  placeholder="Breve descripción de la categoría..."
+                  className="w-full px-4 py-3 bg-gray-50 border border-gray-200 rounded-md outline-none focus:border-gold transition-colors resize-none"
+                />
+              </div>
+
+              <div className="flex justify-end space-x-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsFormOpen(false)}
+                  className="px-6 py-3 text-darkgray hover:text-red transition-colors font-medium"
+                >
+                  Cancelar
+                </button>
+                <button 
+                  type="submit"
+                  disabled={isSaving}
+                  className="flex items-center space-x-2 bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue transition-colors disabled:opacity-50"
+                >
+                  {isSaving ? <Clock className="animate-spin" size={20} /> : <CheckCircle2 size={20} />}
+                  <span>{isSaving ? 'Guardando...' : (editingCategory ? 'Actualizar Categoría' : 'Guardar Categoría')}</span>
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        )}
+      </AnimatePresence>
+
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+        {categories.map((cat) => (
+          <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group">
+            <div className="h-48 relative overflow-hidden">
+              <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
+              <div className="absolute top-4 right-4 flex space-x-2">
+                <button 
+                  onClick={() => handleEdit(cat)}
+                  className="p-2 bg-white/90 backdrop-blur-sm text-navy rounded-full shadow-sm hover:bg-gold hover:text-white transition-all"
+                >
+                  <PlusCircle size={18} />
+                </button>
+                <button 
+                  onClick={() => handleDelete(cat.id)}
+                  className="p-2 bg-white/90 backdrop-blur-sm text-red-500 rounded-full shadow-sm hover:bg-red-500 hover:text-white transition-all"
+                >
+                  <Trash2 size={18} />
+                </button>
+              </div>
+            </div>
+            <div className="p-6">
+              <h4 className="text-xl font-serif text-navy mb-2">{cat.name}</h4>
+              <p className="text-darkgray/70 text-sm font-light line-clamp-2">{cat.description}</p>
+            </div>
+          </div>
+        ))}
+      </div>
+    </div>
+  );
+};
+
 export const AdminRoutes = () => {
   return (
     <AdminLayout>
@@ -1137,6 +1337,7 @@ export const AdminRoutes = () => {
         <Route path="/ventas" element={<AdminSales />} />
         <Route path="/pedidos" element={<AdminOrders />} />
         <Route path="/productos" element={<AdminProducts />} />
+        <Route path="/categorias" element={<AdminCategories />} />
         <Route path="/usuarios" element={<AdminUsers />} />
       </Routes>
     </AdminLayout>
