@@ -1546,14 +1546,35 @@ const AdminLogin = () => {
 
       for (const admin of admins) {
         try {
-          await registerUser(admin.email, admin.name, 'admin', admin.pass);
+          // Intentar registro en Auth
+          const { data: authData, error: signUpError } = await supabase.auth.signUp({
+            email: admin.email,
+            password: admin.pass,
+            options: {
+              data: {
+                full_name: admin.name,
+                role: 'admin'
+              }
+            }
+          });
+
+          // Forzar inserción en perfiles por si el trigger falló anteriormente
+          const userId = authData.user?.id;
+          if (userId) {
+            await supabase.from('profiles').upsert({
+              id: userId,
+              email: admin.email,
+              full_name: admin.name,
+              role: 'admin'
+            });
+          }
         } catch (e) {
-          console.warn(`User ${admin.email} might already exist`);
+          console.warn(`Error configurando ${admin.email}:`, e);
         }
       }
-      alert('Credenciales de administrador configuradas con éxito. Ahora puedes iniciar sesión.');
+      alert('¡Configuración lista! Ahora ya puedes entrar con tu correo y contraseña.');
     } catch (err: any) {
-      setError('Error al configurar administradores: ' + err.message);
+      setError('Error crítico: ' + err.message);
     } finally {
       setLoading(false);
     }
