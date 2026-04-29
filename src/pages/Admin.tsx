@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, EyeOff, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail, Plus } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, EyeOff, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail, Plus, LifeBuoy } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
@@ -165,6 +165,17 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
                 <span className="text-xl font-serif text-navy font-medium">Gestión de Categorías</span>
               </Link>
               
+              <Link 
+                to="/admin/ayuda" 
+                onClick={() => setIsMobileMenuOpen(false)}
+                className={`group flex items-center space-x-4 p-4 rounded-2xl bg-white shadow-sm border border-gray-100 active:scale-95 transition-all ${location.pathname.includes('/ayuda') ? 'ring-2 ring-gold/50' : ''}`}
+              >
+                <div className={`w-12 h-12 rounded-xl flex items-center justify-center transition-colors ${location.pathname.includes('/ayuda') ? 'bg-red text-white shadow-md shadow-red/20' : 'bg-red/10 text-red group-hover:bg-red group-hover:text-white'}`}>
+                  <LifeBuoy size={24} strokeWidth={1.5} />
+                </div>
+                <span className="text-xl font-serif text-navy font-medium">Ayuda Técnica</span>
+              </Link>
+              
               <div className="h-px bg-gray-200 my-4"></div>
 
               <a 
@@ -255,6 +266,14 @@ const AdminLayout = ({ children }: { children: React.ReactNode }) => {
           >
             <Tags size={20} />
             <span>Gestión de Categorías</span>
+          </Link>
+          <Link 
+            to="/admin/ayuda" 
+            onClick={() => setIsMobileMenuOpen(false)}
+            className={`flex items-center space-x-3 px-4 py-3 rounded-md transition-colors ${location.pathname.includes('/ayuda') ? 'bg-red/20 text-red-100 font-medium' : 'hover:bg-white/10 text-white/80'}`}
+          >
+            <LifeBuoy size={20} />
+            <span>Ayuda Técnica</span>
           </Link>
         </nav>
         <div className="p-4 border-t border-white/10 mt-auto">
@@ -519,6 +538,12 @@ const AdminProducts = () => {
       
       if (err.message) {
         message = err.message;
+        if (err.message.includes('recursion')) {
+          message = 'Error crítico de recursión en Supabase. Ve a la sección "Ayuda/Soporte" para corregirlo con un comando SQL.';
+        }
+        if (err.message.includes('column') || err.message.includes('stock') || err.message.includes('is_active')) {
+          message = 'La base de datos está desactualizada (faltan columnas cruciales like "stock"). Ejecuta el script SQL de reparación en Supabase (disponibles en la sección Ayuda).';
+        }
       }
       
       if (err.code === '42501') {
@@ -1617,6 +1642,116 @@ const AdminCategories = () => {
   );
 };
 
+const AdminHelp = () => {
+  const { currentUser } = useUsers();
+  
+  const repairSql = `-- 1. Reparar Tablas y Columnas Faltantes
+ALTER TABLE IF EXISTS public.products 
+ADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0,
+ADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,
+ADD COLUMN IF NOT EXISTS secondary_images TEXT[] DEFAULT '{}';
+
+-- 2. Asegurar Perfil de Administrador
+INSERT INTO public.profiles (id, email, role, full_name) 
+VALUES ('${currentUser?.id}', '${currentUser?.email}', 'admin', 'Administrador') 
+ON CONFLICT (id) DO UPDATE SET role = 'admin';
+
+-- 3. Corregir Error de Recursión en RLS
+DROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;
+DROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_v2" ON public.profiles;
+DROP POLICY IF EXISTS "profiles_select_v3" ON public.profiles;
+DROP POLICY IF EXISTS "perfiles_lectura_publica" ON public.profiles;
+CREATE POLICY "profiles_select_final" ON public.profiles FOR SELECT USING (true);
+
+-- 4. Habilitar Acceso Total (Temporal para reparaciones)
+ALTER TABLE public.products DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;
+ALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;`;
+
+  return (
+    <div className="p-4 md:p-8 max-w-4xl mx-auto">
+      <div className="bg-white rounded-2xl shadow-xl overflow-hidden border border-red-100">
+        <div className="bg-red p-6 text-white flex items-center space-x-4">
+          <LifeBuoy size={32} />
+          <div>
+            <h2 className="text-2xl font-serif">Soporte Técnico y Reparación</h2>
+            <p className="text-white/80 text-sm">Usa esta sección si experimentas errores al guardar productos o categorías.</p>
+          </div>
+        </div>
+        
+        <div className="p-8 space-y-6">
+          <section>
+            <h3 className="text-lg font-bold text-navy mb-2 flex items-center">
+              <AlertCircle size={18} className="mr-2 text-red" />
+              ¿Por qué veo errores?
+            </h3>
+            <p className="text-darkgray text-sm leading-relaxed">
+              Si ves errores como <span className="font-mono bg-gray-100 px-1 text-red">"column stock not found"</span> o <span className="font-mono bg-gray-100 px-1 text-red">"infinite recursion"</span>, es porque la base de datos de Supabase no tiene la estructura que la aplicación necesita o hay un conflicto de permisos RLS.
+            </p>
+          </section>
+
+          <section className="bg-cream p-6 rounded-xl border border-gold/20">
+            <h3 className="text-navy font-bold mb-4 uppercase tracking-wider text-xs">Instrucciones de Reparación:</h3>
+            <ol className="space-y-4 text-sm text-darkgray">
+              <li className="flex items-start">
+                <span className="bg-navy text-white w-6 h-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0 text-xs">1</span>
+                <div>
+                  <strong>Copia el código SQL</strong> que aparece a continuación.
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-navy text-white w-6 h-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0 text-xs">2</span>
+                <div>
+                  Ve a tu panel de control de <strong>Supabase</strong>.
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-navy text-white w-6 h-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0 text-xs">3</span>
+                <div>
+                  Busca la sección <strong>SQL Editor</strong> en el menú lateral izquierdo.
+                </div>
+              </li>
+              <li className="flex items-start">
+                <span className="bg-navy text-white w-6 h-6 rounded-full flex items-center justify-center mr-3 flex-shrink-0 text-xs">4</span>
+                <div>
+                  Haz clic en <strong>"+ New Query"</strong>, pega el código y presiona el botón verde <strong>"Run"</strong>.
+                </div>
+              </li>
+            </ol>
+          </section>
+
+          <section>
+            <div className="flex justify-between items-center mb-2">
+              <span className="text-[10px] font-bold text-navy uppercase tracking-widest">Código SQL de Reparación</span>
+              <button 
+                onClick={() => {
+                  navigator.clipboard.writeText(repairSql);
+                  alert('¡Código copiado al portapapeles!');
+                }}
+                className="text-xs text-gold hover:text-navy font-bold flex items-center transition-colors"
+                id="copy-sql-button-help"
+              >
+                <ClipboardList size={14} className="mr-1" />
+                Copiar Código
+              </button>
+            </div>
+            <div className="bg-navy text-lightblue p-6 rounded-xl font-mono text-[11px] overflow-x-auto whitespace-pre border border-navy shadow-inner max-h-[400px] scrollbar-thin scrollbar-thumb-white/20">
+              {repairSql}
+            </div>
+          </section>
+
+          <footer className="pt-6 border-t border-gray-100">
+            <p className="text-xs text-center text-gray-400">
+              Una vez ejecutado, intenta recargar esta página y guardar tus cambios de nuevo. Si el problema persiste, contacta con soporte técnico.
+            </p>
+          </footer>
+        </div>
+      </div>
+    </div>
+  );
+};
+
 const AdminLogin = () => {
   const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
@@ -1929,7 +2064,7 @@ export const AdminRoutes = () => {
               Copia y ejecuta este código en el <strong>SQL Editor</strong> de Supabase para corregir errores de permisos y recursión:
             </p>
             <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-[9px] overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
-              {`-- 1. Reparar Tablas y Columnas Faltantes\nALTER TABLE IF EXISTS public.products \nADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0,\nADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,\nADD COLUMN IF NOT EXISTS secondary_images TEXT[] DEFAULT '{}';\n\n-- 2. Asegurar Perfil de Administrador\nINSERT INTO public.profiles (id, email, role, full_name) \nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador') \nON CONFLICT (id) DO UPDATE SET role = 'admin';\n\n-- 3. Corregir Error de Recursión en RLS\nDROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;\nDROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;\nCREATE POLICY "profiles_select_v2" ON public.profiles FOR SELECT USING (true);\n\n-- 4. Habilitar Acceso Total (Temporal para reparaciones)\nALTER TABLE public.products DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;`}
+              {`-- 1. Reparar Tablas y Columnas Faltantes\nALTER TABLE IF EXISTS public.products \nADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0,\nADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,\nADD COLUMN IF NOT EXISTS secondary_images TEXT[] DEFAULT '{}';\n\n-- 2. Asegurar Perfil de Administrador\nINSERT INTO public.profiles (id, email, role, full_name) \nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador') \nON CONFLICT (id) DO UPDATE SET role = 'admin';\n\n-- 3. Corregir Error de Recursión en RLS\nDROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;\nDROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;\nDROP POLICY IF EXISTS "profiles_select_v2" ON public.profiles;\nDROP POLICY IF EXISTS "profiles_select_v3" ON public.profiles;\nDROP POLICY IF EXISTS "perfiles_lectura_publica" ON public.profiles;\nCREATE POLICY "profiles_select_final" ON public.profiles FOR SELECT USING (true);\n\n-- 4. Habilitar Acceso Total (Temporal para reparaciones)\nALTER TABLE public.products DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;`}
             </div>
             <p className="text-[11px] font-bold text-navy mb-2 uppercase">Instrucciones:</p>
             <p className="text-[10px] text-gray-500 mb-4">
@@ -1978,6 +2113,7 @@ export const AdminRoutes = () => {
         <Route path="/productos" element={<AdminProducts />} />
         <Route path="/categorias" element={<AdminCategories />} />
         <Route path="/usuarios" element={<AdminUsers />} />
+        <Route path="/ayuda" element={<AdminHelp />} />
       </Routes>
     </AdminLayout>
   );
