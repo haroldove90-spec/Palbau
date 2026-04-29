@@ -1765,7 +1765,16 @@ const AdminLogin = () => {
 };
 
 export const AdminRoutes = () => {
-  const { isAdmin, loading, currentUser, profile } = useUsers();
+  const { isAdmin, loading, currentUser, profile, fetchProfile } = useUsers();
+  const [refreshing, setRefreshing] = useState(false);
+
+  const handleRefresh = async () => {
+    if (currentUser) {
+      setRefreshing(true);
+      await fetchProfile(currentUser.id);
+      setRefreshing(false);
+    }
+  };
 
   if (loading) {
     return (
@@ -1796,24 +1805,32 @@ export const AdminRoutes = () => {
           </div>
 
           <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8 overflow-hidden">
-            <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4">Instrucciones para activar tu cuenta:</p>
+            <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4">Instrucciones críticas:</p>
             <p className="text-sm text-darkgray mb-4">
-              Copia y ejecuta este comando SQL en el SQL Editor de tu proyecto Supabase para convertirte en administrador:
+              Si el comando anterior te dio "No rows returned", es porque tu perfil aún no se ha creado. Copia y ejecuta este comando de <strong>INSERCIÓN</strong> en el SQL Editor de Supabase:
             </p>
-            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre">
-              {`UPDATE public.profiles \nSET role = 'admin' \nWHERE id = '${currentUser.id}';`}
+            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre mb-4">
+              {`INSERT INTO public.profiles (id, email, role, full_name)\nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador')\nON CONFLICT (id) DO UPDATE SET role = 'admin';`}
             </div>
-            <p className="text-[10px] text-gray-400 mt-4 italic">
-              * Nota: Si la tabla "profiles" no existe, asegúrate de ejecutar primero el SQL completo de configuración.
+            <p className="text-[10px] text-gray-400 italic">
+              * Nota: Esto asegura que tu usuario exista y tenga el rol de administrador simultáneamente.
             </p>
           </div>
 
           <div className="flex flex-col space-y-3">
             <button 
-              onClick={() => window.location.reload()}
-              className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all"
+              onClick={handleRefresh}
+              disabled={refreshing}
+              className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
             >
-              Ya lo hice, recargar página
+              {refreshing ? (
+                <>
+                  <div className="w-4 h-4 border-2 border-white border-t-transparent rounded-full animate-spin"></div>
+                  <span>Verificando...</span>
+                </>
+              ) : (
+                <span>Ya lo hice, verificar acceso</span>
+              )}
             </button>
             <button 
               onClick={() => supabase.auth.signOut()}

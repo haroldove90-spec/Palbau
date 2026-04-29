@@ -18,6 +18,7 @@ type UserContextType = {
   loading: boolean;
   isAdmin: boolean;
   fetchUsers: () => Promise<void>;
+  fetchProfile: (userId: string) => Promise<void>;
   registerUser: (email: string, fullName: string, role: string, password?: string) => Promise<void>;
   updateUser: (id: string, updates: Partial<UserProfile>) => Promise<void>;
 };
@@ -171,6 +172,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
       loading, 
       isAdmin, 
       fetchUsers, 
+      fetchProfile,
       registerUser, 
       updateUser 
     }}>
