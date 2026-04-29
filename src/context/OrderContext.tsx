@@ -42,11 +42,32 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
 
   useEffect(() => {
     fetchOrders();
+
+    // Suscripción en tiempo real para actualizaciones automáticas
+    const channel = supabase
+      .channel('schema-db-changes')
+      .on(
+        'postgres_changes',
+        {
+          event: '*',
+          schema: 'public',
+          table: 'orders'
+        },
+        () => {
+          console.log('Cambio detectado en pedidos, refrescando...');
+          fetchOrders(true);
+        }
+      )
+      .subscribe();
+
+    return () => {
+      supabase.removeChannel(channel);
+    };
   }, []);
 
-  const fetchOrders = async () => {
+  const fetchOrders = async (silent = false) => {
     try {
-      setLoading(true);
+      if (!silent) setLoading(true);
       const { data, error } = await supabase
         .from('orders')
         .select(`
