@@ -1381,9 +1381,12 @@ const AdminCategories = () => {
       setFormData({ name: '', description: '', image: '' });
       setEditingCategory(null);
       setImageWarning(undefined);
-    } catch (error) {
+    } catch (error: any) {
       console.error('Error saving category:', error);
-      alert('Error al guardar la categoría.');
+      let message = 'Error al guardar la categoría.';
+      if (error.message) message += ` Detalle: ${error.message}`;
+      if (error.code === '42501') message = 'Error de permisos (RLS): No tienes permiso para escribir en la tabla de categorías. Asegúrate de haber ejecutado el script SQL como administrador.';
+      alert(message);
     } finally {
       setIsSaving(false);
     }
@@ -1897,16 +1900,21 @@ export const AdminRoutes = () => {
             </p>
           </div>
 
-          <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8 overflow-hidden">
-            <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4">Instrucciones críticas:</p>
-            <p className="text-sm text-darkgray mb-4">
-              Si el comando anterior te dio "No rows returned", es porque tu perfil aún no se ha creado. Copia y ejecuta este comando de <strong>INSERCIÓN</strong> en el SQL Editor de Supabase:
+          <div className="bg-gray-50 p-6 rounded-xl border-2 border-gold/30 mb-8 overflow-hidden">
+            <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4 flex items-center">
+              <Shield size={14} className="mr-2 text-gold" />
+              Instrucciones para activar tu cuenta:
             </p>
-            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre mb-4">
+            <p className="text-sm text-darkgray mb-4">
+              Para poder guardar cambios (productos, categorías), tu cuenta debe estar registrada como administrador en la base de datos.
+            </p>
+            <p className="text-[11px] font-bold text-navy mb-2 uppercase">1. Copia este comando:</p>
+            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
               {`INSERT INTO public.profiles (id, email, role, full_name)\nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador')\nON CONFLICT (id) DO UPDATE SET role = 'admin';`}
             </div>
-            <p className="text-[10px] text-gray-400 italic">
-              * Nota: Esto asegura que tu usuario exista y tenga el rol de administrador simultáneamente.
+            <p className="text-[11px] font-bold text-navy mb-2 uppercase">2. Ejecútalo en Supabase:</p>
+            <p className="text-[10px] text-gray-500 mb-4">
+              Ve a tu pestaña de <strong>Supabase &gt; SQL Editor &gt; New Query</strong>, pega el código y dale a <strong>Run</strong>.
             </p>
           </div>
 
