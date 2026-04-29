@@ -105,21 +105,29 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
 
   const createOrder = async (order: Omit<Order, 'id' | 'created_at' | 'status'>, items: Omit<OrderItem, 'id' | 'order_id'>[]) => {
     try {
-      // 1. Create the order
+      const orderPayload = {
+        customer_name: order.customer_name,
+        customer_address: order.customer_address,
+        total: order.total,
+        status: 'pendiente'
+      };
+      
+      console.log('Inserting order:', orderPayload);
+
       const { data: orderData, error: orderError } = await supabase
         .from('orders')
-        .insert([{
-          customer_name: order.customer_name,
-          customer_address: order.customer_address,
-          total: order.total,
-          status: 'pendiente'
-        }])
+        .insert([orderPayload])
         .select();
 
-      if (orderError) throw orderError;
+      if (orderError) {
+        console.error('Supabase Order Insert Error:', orderError);
+        throw orderError;
+      }
+      
       if (!orderData || orderData.length === 0) throw new Error('No se pudo crear el pedido');
       
       const newOrderId = orderData[0].id;
+      console.log('Order created successfully, ID:', newOrderId);
 
       // 2. Create the order items
       const itemsToInsert = items.map(item => ({
@@ -128,12 +136,17 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         quantity: item.quantity,
         price: item.price
       }));
+      
+      console.log('Inserting order items:', itemsToInsert);
 
       const { error: itemsError } = await supabase
         .from('order_items')
         .insert(itemsToInsert);
 
-      if (itemsError) throw itemsError;
+      if (itemsError) {
+        console.error('Supabase Order Items Insert Error:', itemsError);
+        throw itemsError;
+      }
 
       // 3. Refresh orders
       await fetchOrders();

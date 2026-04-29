@@ -659,7 +659,7 @@ const CartModal = () => {
       
       const encodedMessage = encodeURIComponent(message);
 
-      // 2. Try to save to Supabase (but don't block if it fails)
+      // 2. Try to save to Supabase
       try {
         const orderData = {
           customer_name: customerName,
@@ -674,8 +674,10 @@ const CartModal = () => {
         }));
 
         await createOrder(orderData, orderItems);
-      } catch (dbError) {
-        console.error('Database order save failed, but proceeding with WhatsApp:', dbError);
+      } catch (dbError: any) {
+        console.error('Database order save failed:', dbError);
+        // Alert the user that the order was NOT saved in the system but will proceed to WhatsApp
+        alert('Nota: Tu pedido se enviará por WhatsApp, pero hubo un problema al registrarlo en nuestro sistema interno. Por favor, asegúrate de completar el envío en WhatsApp.');
       }
       
       // 3. Open WhatsApp
