@@ -15,13 +15,14 @@ export type Order = {
   customer_name: string;
   customer_address: string;
   total: number;
-  status: 'pendiente' | 'en proceso' | 'completado' | 'cancelado';
+  status: 'pendiente' | 'en proceso' | 'entregado' | 'cancelado';
   created_at: string;
   items?: OrderItem[];
 };
 
 type OrderContextType = {
   orders: Order[];
+  loading: boolean;
   updateOrderStatus: (id: number, status: Order['status']) => Promise<void>;
   fetchOrders: () => Promise<void>;
   createOrder: (order: Omit<Order, 'id' | 'created_at' | 'status'>, items: Omit<OrderItem, 'id' | 'order_id'>[]) => Promise<void>;
@@ -57,16 +58,19 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         `)
         .order('created_at', { ascending: false });
 
-      if (error) throw error;
+      if (error) {
+        console.error('Database query error:', error);
+        return;
+      }
 
       const mappedOrders: Order[] = (data || []).map(o => ({
         id: o.id,
         customer_name: o.customer_name,
         customer_address: o.customer_address,
         total: Number(o.total),
-        status: o.status,
+        status: o.status || 'pendiente',
         created_at: o.created_at,
-        items: o.order_items.map((item: any) => ({
+        items: (o.order_items || []).map((item: any) => ({
           id: item.id,
           order_id: item.order_id,
           product_id: item.product_id,
@@ -113,6 +117,8 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
         .select();
 
       if (orderError) throw orderError;
+      if (!orderData || orderData.length === 0) throw new Error('No se pudo crear el pedido');
+      
       const newOrderId = orderData[0].id;
 
       // 2. Create the order items
@@ -132,13 +138,13 @@ export const OrderProvider = ({ children }: { children: React.ReactNode }) => {
       // 3. Refresh orders
       await fetchOrders();
     } catch (error) {
-      console.error('Error creating order:', error);
+      console.error('Error creating order in Supabase:', error);
       throw error;
     }
   };
 
   return (
-    <OrderContext.Provider value={{ orders, updateOrderStatus, fetchOrders, createOrder }}>
+    <OrderContext.Provider value={{ orders, loading, updateOrderStatus, fetchOrders, createOrder }}>
       {children}
     </OrderContext.Provider>
   );
