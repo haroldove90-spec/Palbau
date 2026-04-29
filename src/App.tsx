@@ -650,7 +650,7 @@ const CartModal = () => {
 
       // 1. Prepare WhatsApp message
       let message = `Hola! Soy *${customerName}*.\n`;
-      message += `Ubicación de entrega: ${customerAddress}\n\n`;
+      message += `Dirección de entrega: ${customerAddress}\n\n`;
       message += "Me gustaría realizar el siguiente pedido:\n\n";
       cart.forEach(item => {
         message += `- ${item.quantity}x ${item.product.name} ($${(item.product.price * item.quantity).toFixed(2)})\n`;
@@ -777,10 +777,10 @@ const CartModal = () => {
                     />
                   </div>
                   <div className="relative">
-                    <MapPin size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-darkgray/40" />
+                    <Home size={16} className="absolute left-3 top-1/2 -translate-y-1/2 text-darkgray/40" />
                     <input 
                       type="text" 
-                      placeholder="Dirección o ubicación real" 
+                      placeholder="Dirección exacta de entrega (Calle, No, Col)" 
                       value={customerAddress}
                       onChange={(e) => setCustomerAddress(e.target.value)}
                       className="w-full pl-10 pr-12 py-3 bg-white border border-gray-200 rounded-sm text-sm outline-none focus:border-lightblue transition-colors"
@@ -789,7 +789,7 @@ const CartModal = () => {
                       onClick={getRealLocation}
                       disabled={isLoadingLocation}
                       className="absolute right-2 top-1/2 -translate-y-1/2 p-1.5 text-lightblue hover:bg-lightblue/10 rounded-full transition-colors disabled:opacity-50"
-                      title="Obtener mi ubicación real"
+                      title="Obtener mi ubicación GPS"
                     >
                       <MapPin size={16} className={isLoadingLocation ? 'animate-pulse' : ''} />
                     </button>
