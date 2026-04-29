@@ -4,11 +4,7 @@ Esta guía explica cómo gestionar las funciones principales de tu panel adminis
 
 ## 1. Acceso y Usuarios
 - Accede mediante el botón **Admin** en el menú.
-- **Credenciales iniciales:**
-    - **Usuario 1:** `haroldo90@palbau.com` | **Clave:** `chevropar#1970`
-    - **Usuario 2:** `jesus_palbau@palbau.com` | **Clave:** `chevropar#1970`
-- Si es la primera vez que entras y el panel está vacío, usa el botón **"Configurar Administradores"** en la pantalla de inicio de sesión para activar estas cuentas.
-- En **Gestión de Usuarios**, puedes registrar más colaboradores.
+- En **Gestión de Usuarios**, puedes registrar colaboradores.
 - Usa el botón **Generar** para crear contraseñas seguras para tu equipo.
 - Puedes cambiar los roles (Admin/Usuario) pulsando **Editar**.
 
