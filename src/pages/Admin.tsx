@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, EyeOff, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
@@ -1511,10 +1511,9 @@ const AdminCategories = () => {
 };
 
 const AdminLogin = () => {
-  const { login, loading: authLoading } = useUsers() as any; // Temporary cast if type not updated yet
-  // We'll use the context for login, so let's make sure it's exported or just use supabase directly here
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { registerUser, users } = useUsers();
@@ -1530,7 +1529,7 @@ const AdminLogin = () => {
       });
       if (loginError) throw loginError;
     } catch (err: any) {
-      setError(err.message || 'Error al iniciar sesión');
+      setError(err.message === 'Invalid login credentials' ? 'Correo o contraseña incorrectos' : err.message);
     } finally {
       setLoading(false);
     }
@@ -1601,14 +1600,26 @@ const AdminLogin = () => {
               <Key size={12} className="mr-2" />
               Contraseña
             </label>
-            <input 
-              type="password" 
-              required
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              placeholder="••••••••"
-              className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light"
-            />
+            <div className="relative">
+              <input 
+                id="password-field"
+                name="password"
+                type={showPassword ? "text" : "password"} 
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                placeholder="••••••••"
+                className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light pr-12 text-navy"
+              />
+              <button 
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                className="absolute right-4 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gold transition-colors z-20 p-1"
+                aria-label={showPassword ? "Ocultar contraseña" : "Mostrar contraseña"}
+              >
+                {showPassword ? <EyeOff size={20} /> : <Eye size={20} />}
+              </button>
+            </div>
           </div>
 
           {error && (
