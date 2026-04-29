@@ -166,6 +166,7 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     'haroldo90@palbau.com',
     'haroldo90@hotmail.com',
     'haroldo90@gmail.com',
+    'haroldove90@gmail.com',
     'jesus_palbau@palbau.com'
   ].includes(currentUser?.email || '');
 

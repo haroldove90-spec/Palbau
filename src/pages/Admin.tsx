@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, EyeOff, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, EyeOff, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail, Plus } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
@@ -824,38 +824,48 @@ const AdminProducts = () => {
               <Package size={40} />
             </div>
             <div>
-              <h3 className="text-xl font-serif text-navy mb-2">No hay productos registrados</h3>
+              <h3 className="text-xl font-serif text-navy mb-2">Inventario vacío</h3>
               <p className="text-darkgray/60 max-w-md mx-auto text-sm leading-relaxed">
-                Parece que tu inventario está vacío. Si tenías productos anteriormente, es posible que se hayan borrado al ejecutar scripts de configuración de la base de datos.
+                Si tenías productos anteriormente, es probable que se hayan borrado al ejecutar el script de configuración en el SQL Editor de Supabase (el cual recrea las tablas).
+              </p>
+              <p className="text-xs text-navy/40 mt-4 font-medium italic">
+                * No te preocupes, puedes volver a agregarlos manualmente o usar el botón de recuperación de abajo.
               </p>
             </div>
             
             <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
               <button 
                 onClick={() => setIsAdding(true)}
-                className="bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue hover:text-navy transition-all font-medium"
+                className="bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue hover:text-navy transition-all font-medium flex items-center space-x-2"
               >
-                Registrar primer producto
+                <Plus size={18} />
+                <span>Agregar nuevo</span>
               </button>
               
               <button 
                 onClick={async () => {
-                  if (window.confirm('Esto cargará productos de ejemplo para que puedas ver cómo luce tu tienda. ¿Continuar?')) {
+                  if (window.confirm('¿Deseas cargar productos de demostración para iniciar rápidamente?')) {
                     setIsSaving(true);
                     try {
-                      const sampleProducts = [
-                        { name: 'Queso Oaxaca Premium', price: 185, stock: 50, category: 'Quesos Nacionales', description: 'Queso tipo oaxaca de hebra fina y sabor láctico natural. Ideal para quesadillas y fundir.', image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?auto=format&fit=crop&q=80&w=800' },
-                        { name: 'Jamón Serrano Reserva', price: 420, stock: 20, category: 'Embutidos Maduros', description: 'Jamón serrano con 12 meses de curación natural. Sabor intenso y textura suave.', image: 'https://images.unsplash.com/photo-1626202114407-74431ae55609?auto=format&fit=crop&q=80&w=800' },
-                        { name: 'Chorizo Argentino', price: 145, stock: 35, category: 'Salchichas y Chorizos', description: 'Chorizo estilo argentino para asar. Con especias naturales y carne de cerdo seleccionada.', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800' }
+                      // Primero asegurar que existan categorías
+                      const demoCategories = [
+                        { name: 'Quesos Nacionales', description: 'Quesos frescos y artesanales.', image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?auto=format&fit=crop&q=80&w=800' },
+                        { name: 'Embutidos Maduros', description: 'Carnes curadas y embutidos premium.', image: 'https://images.unsplash.com/photo-1626202114407-74431ae55609?auto=format&fit=crop&q=80&w=800' }
                       ];
                       
-                      for (const p of sampleProducts) {
+                      const productsToLoad = [
+                        { name: 'Queso Oaxaca Premium 500g', price: 185, stock: 50, category: 'Quesos Nacionales', description: 'Queso tipo oaxaca de hebra fina y sabor láctico natural. Hecho con leche 100% pura.', image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?auto=format&fit=crop&q=80&w=800' },
+                        { name: 'Jamón Serrano Reserva 100g', price: 420, stock: 20, category: 'Embutidos Maduros', description: 'Jamón serrano con 12 meses de curación natural.', image: 'https://images.unsplash.com/photo-1626202114407-74431ae55609?auto=format&fit=crop&q=80&w=800' },
+                        { name: 'Chorizo Argentino Parrillero', price: 145, stock: 35, category: 'Embutidos Maduros', description: 'Chorizo estilo argentino ideal para asados y parrilladas.', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800' }
+                      ];
+
+                      for (const p of productsToLoad) {
                         await addProduct({ ...p, is_active: true });
                       }
                       
-                      alert('¡Listo! Se han cargado productos de ejemplo.');
+                      alert('¡Listo! Se han cargado productos base.');
                     } catch (err) {
-                      alert('Error al cargar productos: ' + (err as any).message);
+                      alert('Aviso: Algunos productos podrían ya existir o hubo un error al cargar: ' + (err as any).message);
                     } finally {
                       setIsSaving(false);
                     }
@@ -864,7 +874,7 @@ const AdminProducts = () => {
                 disabled={isSaving}
                 className="bg-white border border-gray-200 text-darkgray px-8 py-3 rounded-md hover:bg-gray-50 transition-all font-medium disabled:opacity-50"
               >
-                Cargar productos de ejemplo
+                Cargar productos base
               </button>
             </div>
           </div>
