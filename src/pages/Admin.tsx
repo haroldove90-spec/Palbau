@@ -1392,6 +1392,9 @@ const AdminCategories = () => {
         if (error.message.includes('recursion')) {
           message = 'Error crítico de recursión en Supabase. Ve a la sección "Ayuda" al final de esta página para corregirlo con un comando SQL.';
         }
+        if (error.message.includes('column') || error.message.includes('stock') || error.message.includes('is_active')) {
+          message = 'La base de datos está desactualizada (faltan columnas). Ejecuta el script SQL en Supabase para añadir los campos necesarios.';
+        }
       }
       if (error.code === '42501') message = 'Error de permisos (RLS): No tienes permiso para escribir en la tabla de categorías. Asegúrate de haber ejecutado el script SQL como administrador.';
       alert(message);
@@ -1925,12 +1928,12 @@ export const AdminRoutes = () => {
             <p className="text-sm text-darkgray mb-4">
               Copia y ejecuta este código en el <strong>SQL Editor</strong> de Supabase para corregir errores de permisos y recursión:
             </p>
-            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-[10px] overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
-              {`-- 1. Asegurar perfil de admin\nINSERT INTO public.profiles (id, email, role, full_name) \nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador') \nON CONFLICT (id) DO UPDATE SET role = 'admin';\n\n-- 2. Corregir error de recursión en RLS\nDROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;\nDROP POLICY IF EXISTS "Profiles are viewable by everyone" ON profiles;\nDROP POLICY IF EXISTS "Users can update own profile" ON profiles;\nDROP POLICY IF EXISTS "Admins can update any profile" ON profiles;\n\nCREATE POLICY "profiles_select_policy" ON public.profiles FOR SELECT USING (true);\nCREATE POLICY "profiles_update_policy" ON public.profiles FOR UPDATE USING (auth.uid() = id);\n\n-- 3. Habilitar permisos en otras tablas\nALTER TABLE public.products DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;`}
+            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-[9px] overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
+              {`-- 1. Reparar Tablas y Columnas Faltantes\nALTER TABLE IF EXISTS public.products \nADD COLUMN IF NOT EXISTS stock INTEGER DEFAULT 0,\nADD COLUMN IF NOT EXISTS is_active BOOLEAN DEFAULT true,\nADD COLUMN IF NOT EXISTS secondary_images TEXT[] DEFAULT '{}';\n\n-- 2. Asegurar Perfil de Administrador\nINSERT INTO public.profiles (id, email, role, full_name) \nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador') \nON CONFLICT (id) DO UPDATE SET role = 'admin';\n\n-- 3. Corregir Error de Recursión en RLS\nDROP POLICY IF EXISTS "profiles_select_policy" ON public.profiles;\nDROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON public.profiles;\nCREATE POLICY "profiles_select_v2" ON public.profiles FOR SELECT USING (true);\n\n-- 4. Habilitar Acceso Total (Temporal para reparaciones)\nALTER TABLE public.products DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.profiles DISABLE ROW LEVEL SECURITY;`}
             </div>
             <p className="text-[11px] font-bold text-navy mb-2 uppercase">Instrucciones:</p>
             <p className="text-[10px] text-gray-500 mb-4">
-              Ve a <strong>Supabase &gt; SQL Editor &gt; New Query</strong>, pega el código y presiona <strong>Run</strong>. Esto eliminará el error de "infinite recursion" y te permitirá guardar productos.
+              Ve a <strong>Supabase &gt; SQL Editor &gt; New Query</strong>, pega el código y presiona <strong>Run</strong>. Esto corregirá los errores de "column not found" y "recursion" automáticamente.
             </p>
           </div>
 
