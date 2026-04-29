@@ -1555,15 +1555,23 @@ const AdminLogin = () => {
         
         // Verificación adicional de perfil tras logueo exitoso en Auth
         if (data.user) {
-          const { data: profileData } = await supabase
+          const { data: profileData, error: profileError } = await supabase
             .from('profiles')
             .select('role')
             .eq('id', data.user.id)
             .single();
           
-          if (profileData && profileData.role !== 'admin') {
-            setError('Tu cuenta no tiene permisos de administrador. Contacta al soporte o cambia tu rol en la base de datos.');
-            await supabase.auth.signOut();
+          if (profileError && profileError.code === 'PGRST116') {
+            // No hay perfil, intentamos crearlo (esto pasa si el trigger falló)
+            await supabase.from('profiles').upsert({
+              id: data.user.id,
+              email: data.user.email,
+              full_name: data.user.user_metadata?.full_name || '',
+              role: 'admin' // Si es el primer usuario que entra tras crearlo, lo ponemos como admin
+            });
+          } else if (profileData && profileData.role !== 'admin') {
+            setError('Tu cuenta no tiene permisos de administrador. Necesitas cambiar el rol a "admin" en la tabla profiles.');
+            // No cerramos sesión aquí para que AdminRoutes pueda mostrar la info de ayuda
           }
         }
       }
@@ -1757,7 +1765,7 @@ const AdminLogin = () => {
 };
 
 export const AdminRoutes = () => {
-  const { isAdmin, loading } = useUsers();
+  const { isAdmin, loading, currentUser, profile } = useUsers();
 
   if (loading) {
     return (
@@ -1766,6 +1774,56 @@ export const AdminRoutes = () => {
           <div className="w-12 h-12 border-4 border-gold border-t-navy rounded-full animate-spin"></div>
           <p className="text-navy font-serif tracking-widest uppercase text-xs">Cargando Panel...</p>
         </div>
+      </div>
+    );
+  }
+
+  // Caso: Autenticado pero NO es admin
+  if (currentUser && !isAdmin) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center p-6 bg-[url('https://appdesignproyectos.com/textura_papel.png')] bg-repeat">
+        <motion.div 
+          initial={{ opacity: 0, y: 20 }}
+          animate={{ opacity: 1, y: 0 }}
+          className="max-w-xl w-full bg-white p-8 md:p-12 rounded-2xl shadow-2xl border border-red/20 relative"
+        >
+          <div className="text-center mb-8">
+            <Shield size={48} className="mx-auto text-red mb-4" />
+            <h2 className="text-2xl font-serif text-navy mb-2">Acceso Denegado</h2>
+            <p className="text-darkgray/70">
+              Has iniciado sesión como <span className="font-bold">{currentUser.email}</span>, pero no tienes permisos de administrador.
+            </p>
+          </div>
+
+          <div className="bg-gray-50 p-6 rounded-xl border border-gray-100 mb-8 overflow-hidden">
+            <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4">Instrucciones para activar tu cuenta:</p>
+            <p className="text-sm text-darkgray mb-4">
+              Copia y ejecuta este comando SQL en el SQL Editor de tu proyecto Supabase para convertirte en administrador:
+            </p>
+            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre">
+              {`UPDATE public.profiles \nSET role = 'admin' \nWHERE id = '${currentUser.id}';`}
+            </div>
+            <p className="text-[10px] text-gray-400 mt-4 italic">
+              * Nota: Si la tabla "profiles" no existe, asegúrate de ejecutar primero el SQL completo de configuración.
+            </p>
+          </div>
+
+          <div className="flex flex-col space-y-3">
+            <button 
+              onClick={() => window.location.reload()}
+              className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all"
+            >
+              Ya lo hice, recargar página
+            </button>
+            <button 
+              onClick={() => supabase.auth.signOut()}
+              className="w-full border border-gray-200 text-gray-400 py-3 rounded-lg font-bold uppercase tracking-[0.2em] text-[10px] hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
+            >
+              <LogOut size={14} />
+              <span>Cerrar sesión y probar otra cuenta</span>
+            </button>
+          </div>
+        </motion.div>
       </div>
     );
   }
