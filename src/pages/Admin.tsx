@@ -1523,11 +1523,30 @@ const AdminLogin = () => {
     setLoading(true);
     setError(null);
     try {
-      const { error: loginError } = await supabase.auth.signInWithPassword({
+      const { data, error: loginError } = await supabase.auth.signInWithPassword({
         email,
         password
       });
-      if (loginError) throw loginError;
+      if (loginError) {
+        if (loginError.message === 'Email not confirmed') {
+          throw new Error('Debes confirmar tu correo electrónico. Revisa tu bandeja de entrada o spam.');
+        }
+        throw loginError;
+      }
+      
+      // Verificación adicional de perfil tras logueo exitoso en Auth
+      if (data.user) {
+        const { data: profileData } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', data.user.id)
+          .single();
+        
+        if (profileData && profileData.role !== 'admin') {
+          setError('Tu cuenta no tiene permisos de administrador. Contacta al soporte.');
+          await supabase.auth.signOut();
+        }
+      }
     } catch (err: any) {
       setError(err.message === 'Invalid login credentials' ? 'Correo o contraseña incorrectos' : err.message);
     } finally {
@@ -1572,7 +1591,7 @@ const AdminLogin = () => {
           console.warn(`Error configurando ${admin.email}:`, e);
         }
       }
-      alert('¡Configuración lista! Ahora ya puedes entrar con tu correo y contraseña.');
+      alert('¡Proceso iniciado! Supabase ha enviado un correo de confirmación a estas direcciones. DEBES confirmar el email (revisa spam) antes de poder entrar al panel.');
     } catch (err: any) {
       setError('Error crítico: ' + err.message);
     } finally {
