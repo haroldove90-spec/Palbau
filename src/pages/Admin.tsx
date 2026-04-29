@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom';
 import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer, LineChart, Line } from 'recharts';
-import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags } from 'lucide-react';
+import { LayoutDashboard, PackagePlus, DollarSign, ShoppingBag, TrendingUp, PlusCircle, LogOut, ClipboardList, UploadCloud, X, Menu, Home, Eye, ExternalLink, Trash2, Shield, Users, UserPlus, CheckCircle2, Clock, Package, AlertCircle, Tags, Lock, Key, Mail } from 'lucide-react';
 import { motion, AnimatePresence } from 'motion/react';
 import { supabase } from '../lib/supabase';
 import { Product, useProducts } from '../context/ProductContext';
@@ -1510,7 +1510,167 @@ const AdminCategories = () => {
   );
 };
 
+const AdminLogin = () => {
+  const { login, loading: authLoading } = useUsers() as any; // Temporary cast if type not updated yet
+  // We'll use the context for login, so let's make sure it's exported or just use supabase directly here
+  const [email, setEmail] = useState('');
+  const [password, setPassword] = useState('');
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+  const { registerUser, users } = useUsers();
+
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
+    setLoading(true);
+    setError(null);
+    try {
+      const { error: loginError } = await supabase.auth.signInWithPassword({
+        email,
+        password
+      });
+      if (loginError) throw loginError;
+    } catch (err: any) {
+      setError(err.message || 'Error al iniciar sesión');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const seedAdmins = async () => {
+    setLoading(true);
+    setError(null);
+    try {
+      const admins = [
+        { email: 'haroldo90@palbau.com', name: 'Haroldo Palbau', pass: 'chevropar#1970' },
+        { email: 'jesus_palbau@palbau.com', name: 'Jesus Palbau', pass: 'chevropar#1970' }
+      ];
+
+      for (const admin of admins) {
+        try {
+          await registerUser(admin.email, admin.name, 'admin', admin.pass);
+        } catch (e) {
+          console.warn(`User ${admin.email} might already exist`);
+        }
+      }
+      alert('Credenciales de administrador configuradas con éxito. Ahora puedes iniciar sesión.');
+    } catch (err: any) {
+      setError('Error al configurar administradores: ' + err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  return (
+    <div className="min-h-screen bg-cream flex items-center justify-center p-6 bg-[url('https://appdesignproyectos.com/textura_papel.png')] bg-repeat">
+      <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-md w-full bg-white p-8 md:p-12 rounded-2xl shadow-2xl border border-gold/10 relative overflow-hidden"
+      >
+        <div className="absolute top-0 right-0 w-32 h-32 bg-gold/5 rounded-full blur-3xl -translate-y-1/2 translate-x-1/2"></div>
+        <div className="absolute bottom-0 left-0 w-32 h-32 bg-navy/5 rounded-full blur-3xl translate-y-1/2 -translate-x-1/2"></div>
+
+        <div className="text-center mb-10 relative z-10">
+          <img 
+            src="https://appdesignproyectos.com/palbau.png" 
+            alt="PALBAU" 
+            className="h-16 mx-auto mb-6 object-contain"
+          />
+          <h1 className="text-3xl font-serif text-navy mb-2">Panel de Control</h1>
+          <p className="text-darkgray/60 font-light">Inicia sesión para administrar tu tienda</p>
+        </div>
+
+        <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-gray-400 font-bold flex items-center">
+              <Mail size={12} className="mr-2" />
+              Correo Electrónico
+            </label>
+            <input 
+              type="email" 
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              placeholder="admin@palbau.com"
+              className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <label className="text-xs uppercase tracking-widest text-gray-400 font-bold flex items-center">
+              <Key size={12} className="mr-2" />
+              Contraseña
+            </label>
+            <input 
+              type="password" 
+              required
+              value={password}
+              onChange={(e) => setPassword(e.target.value)}
+              placeholder="••••••••"
+              className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light"
+            />
+          </div>
+
+          {error && (
+            <motion.div 
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              className="p-4 bg-red/10 border border-red/20 rounded-lg flex items-center space-x-3 text-red text-sm"
+            >
+              <AlertCircle size={18} />
+              <span>{error}</span>
+            </motion.div>
+          )}
+
+          <button 
+            type="submit"
+            disabled={loading}
+            className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:active:scale-100"
+          >
+            {loading ? 'Iniciando sesión...' : 'Entrar al Panel'}
+          </button>
+        </form>
+
+        {(!users || users.length === 0) && (
+          <div className="mt-10 pt-8 border-t border-gray-100 text-center relative z-10">
+            <p className="text-xs text-gray-400 mb-4 font-light italic">¿Es la primera vez que entras?</p>
+            <button 
+              onClick={seedAdmins}
+              disabled={loading}
+              className="flex items-center justify-center space-x-2 mx-auto text-gold hover:text-navy transition-colors text-xs font-bold uppercase tracking-widest"
+            >
+              <Shield size={14} />
+              <span>Configurar Administradores</span>
+            </button>
+          </div>
+        )}
+
+        <div className="mt-8 text-center text-[10px] text-gray-300 uppercase tracking-widest font-light">
+          PALBAU &copy; {new Date().getFullYear()}
+        </div>
+      </motion.div>
+    </div>
+  );
+};
+
 export const AdminRoutes = () => {
+  const { isAdmin, loading } = useUsers();
+
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-cream flex items-center justify-center">
+        <div className="flex flex-col items-center space-y-4">
+          <div className="w-12 h-12 border-4 border-gold border-t-navy rounded-full animate-spin"></div>
+          <p className="text-navy font-serif tracking-widest uppercase text-xs">Cargando Panel...</p>
+        </div>
+      </div>
+    );
+  }
+
+  if (!isAdmin) {
+    return <AdminLogin />;
+  }
+
   return (
     <AdminLayout>
       <Routes>
