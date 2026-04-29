@@ -162,13 +162,13 @@ export const UserProvider = ({ children }: { children: React.ReactNode }) => {
     }
   };
 
-  const isAdmin = profile?.role === 'admin' || [
+  const isAdmin = (profile?.role === 'admin') || [
     'haroldo90@palbau.com',
     'haroldo90@hotmail.com',
     'haroldo90@gmail.com',
     'haroldove90@gmail.com',
     'jesus_palbau@palbau.com'
-  ].includes(currentUser?.email || '');
+  ].includes(currentUser?.email?.toLowerCase() || '');
 
   return (
     <UserContext.Provider value={{ 

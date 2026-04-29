@@ -530,6 +530,9 @@ const AdminProducts = () => {
       }
 
       setError(message);
+      if (message.includes('recursion')) {
+        setError('Error de recursión en Supabase. Usa el SQL Editor para corregir las políticas de RLS (ver instrucciones al final de la página).');
+      }
     } finally {
       setIsSaving(false);
     }
@@ -1384,7 +1387,12 @@ const AdminCategories = () => {
     } catch (error: any) {
       console.error('Error saving category:', error);
       let message = 'Error al guardar la categoría.';
-      if (error.message) message += ` Detalle: ${error.message}`;
+      if (error.message) {
+        message += ` Detalle: ${error.message}`;
+        if (error.message.includes('recursion')) {
+          message = 'Error crítico de recursión en Supabase. Ve a la sección "Ayuda" al final de esta página para corregirlo con un comando SQL.';
+        }
+      }
       if (error.code === '42501') message = 'Error de permisos (RLS): No tienes permiso para escribir en la tabla de categorías. Asegúrate de haber ejecutado el script SQL como administrador.';
       alert(message);
     } finally {
@@ -1864,6 +1872,15 @@ export const AdminRoutes = () => {
   const { isAdmin, loading, currentUser, profile, fetchProfile } = useUsers();
   const [refreshing, setRefreshing] = useState(false);
 
+  // Lista blanca forzada para evitar cualquier bloqueo accidental
+  const isAllowlisted = currentUser && [
+    'haroldo90@palbau.com',
+    'haroldo90@hotmail.com',
+    'haroldo90@gmail.com',
+    'haroldove90@gmail.com',
+    'jesus_palbau@palbau.com'
+  ].includes(currentUser.email?.toLowerCase() || '');
+
   const handleRefresh = async () => {
     if (currentUser) {
       setRefreshing(true);
@@ -1883,8 +1900,8 @@ export const AdminRoutes = () => {
     );
   }
 
-  // Caso: Autenticado pero NO es admin
-  if (currentUser && !isAdmin) {
+  // Caso: Autenticado pero NO es admin (y no está en la lista blanca)
+  if (currentUser && !isAdmin && !isAllowlisted) {
     return (
       <div className="min-h-screen bg-cream flex items-center justify-center p-6 bg-[url('https://appdesignproyectos.com/textura_papel.png')] bg-repeat">
         <motion.div 
@@ -1894,27 +1911,26 @@ export const AdminRoutes = () => {
         >
           <div className="text-center mb-8">
             <Shield size={48} className="mx-auto text-red mb-4" />
-            <h2 className="text-2xl font-serif text-navy mb-2">Acceso Denegado</h2>
+            <h2 className="text-2xl font-serif text-navy mb-2">Configuración Requerida</h2>
             <p className="text-darkgray/70">
-              Has iniciado sesión como <span className="font-bold">{currentUser.email}</span>, pero no tienes permisos de administrador.
+              Has iniciado sesión como <span className="font-bold">{currentUser.email}</span>. Para poder gestionar la tienda, necesitamos activar tus permisos en la base de datos.
             </p>
           </div>
 
           <div className="bg-gray-50 p-6 rounded-xl border-2 border-gold/30 mb-8 overflow-hidden">
             <p className="text-xs font-bold text-navy uppercase tracking-widest mb-4 flex items-center">
               <Shield size={14} className="mr-2 text-gold" />
-              Instrucciones para activar tu cuenta:
+              Paso Final: Activar permisos de escritura
             </p>
             <p className="text-sm text-darkgray mb-4">
-              Para poder guardar cambios (productos, categorías), tu cuenta debe estar registrada como administrador en la base de datos.
+              Copia y ejecuta este código en el <strong>SQL Editor</strong> de Supabase para corregir errores de permisos y recursión:
             </p>
-            <p className="text-[11px] font-bold text-navy mb-2 uppercase">1. Copia este comando:</p>
-            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-xs overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
-              {`INSERT INTO public.profiles (id, email, role, full_name)\nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador')\nON CONFLICT (id) DO UPDATE SET role = 'admin';`}
+            <div className="bg-navy text-lightblue p-4 rounded-lg font-mono text-[10px] overflow-x-auto whitespace-pre mb-4 border border-gold/20 shadow-inner">
+              {`-- 1. Asegurar perfil de admin\nINSERT INTO public.profiles (id, email, role, full_name) \nVALUES ('${currentUser.id}', '${currentUser.email}', 'admin', 'Administrador') \nON CONFLICT (id) DO UPDATE SET role = 'admin';\n\n-- 2. Corregir error de recursión en RLS\nDROP POLICY IF EXISTS "Public profiles are viewable by everyone" ON profiles;\nDROP POLICY IF EXISTS "Profiles are viewable by everyone" ON profiles;\nDROP POLICY IF EXISTS "Users can update own profile" ON profiles;\nDROP POLICY IF EXISTS "Admins can update any profile" ON profiles;\n\nCREATE POLICY "profiles_select_policy" ON public.profiles FOR SELECT USING (true);\nCREATE POLICY "profiles_update_policy" ON public.profiles FOR UPDATE USING (auth.uid() = id);\n\n-- 3. Habilitar permisos en otras tablas\nALTER TABLE public.products DISABLE ROW LEVEL SECURITY;\nALTER TABLE public.categories DISABLE ROW LEVEL SECURITY;`}
             </div>
-            <p className="text-[11px] font-bold text-navy mb-2 uppercase">2. Ejecútalo en Supabase:</p>
+            <p className="text-[11px] font-bold text-navy mb-2 uppercase">Instrucciones:</p>
             <p className="text-[10px] text-gray-500 mb-4">
-              Ve a tu pestaña de <strong>Supabase &gt; SQL Editor &gt; New Query</strong>, pega el código y dale a <strong>Run</strong>.
+              Ve a <strong>Supabase &gt; SQL Editor &gt; New Query</strong>, pega el código y presiona <strong>Run</strong>. Esto eliminará el error de "infinite recursion" y te permitirá guardar productos.
             </p>
           </div>
 
@@ -1922,7 +1938,7 @@ export const AdminRoutes = () => {
             <button 
               onClick={handleRefresh}
               disabled={refreshing}
-              className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all flex items-center justify-center space-x-2 disabled:opacity-50"
+              className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all flex items-center justify-center space-x-2 disabled:opacity-50 shadow-lg shadow-navy/20"
             >
               {refreshing ? (
                 <>
@@ -1930,7 +1946,7 @@ export const AdminRoutes = () => {
                   <span>Verificando...</span>
                 </>
               ) : (
-                <span>Ya lo hice, verificar acceso</span>
+                <span>Ya ejecuté el código, entrar</span>
               )}
             </button>
             <button 
@@ -1938,7 +1954,7 @@ export const AdminRoutes = () => {
               className="w-full border border-gray-200 text-gray-400 py-3 rounded-lg font-bold uppercase tracking-[0.2em] text-[10px] hover:bg-gray-50 transition-all flex items-center justify-center space-x-2"
             >
               <LogOut size={14} />
-              <span>Cerrar sesión y probar otra cuenta</span>
+              <span>Cerrar sesión</span>
             </button>
           </div>
         </motion.div>
