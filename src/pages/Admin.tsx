@@ -1511,40 +1511,60 @@ const AdminCategories = () => {
 };
 
 const AdminLogin = () => {
+  const [isRegister, setIsRegister] = useState(false);
   const [email, setEmail] = useState('');
+  const [fullName, setFullName] = useState('');
   const [password, setPassword] = useState('');
   const [showPassword, setShowPassword] = useState(false);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const { registerUser, users } = useUsers();
 
-  const handleLogin = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setLoading(true);
     setError(null);
     try {
-      const { data, error: loginError } = await supabase.auth.signInWithPassword({
-        email,
-        password
-      });
-      if (loginError) {
-        if (loginError.message === 'Email not confirmed') {
-          throw new Error('Debes confirmar tu correo electrónico. Revisa tu bandeja de entrada o spam.');
+      if (isRegister) {
+        // Registro
+        const { error: signUpError } = await supabase.auth.signUp({
+          email,
+          password,
+          options: {
+            data: {
+              full_name: fullName,
+              role: 'user' // Por defecto se registra como user, luego se cambia en DB
+            }
+          }
+        });
+        if (signUpError) throw signUpError;
+        alert('Cuenta creada con éxito. DEBES confirmar tu correo electrónico (revisa spam) antes de intentar entrar.');
+        setIsRegister(false);
+      } else {
+        // Login
+        const { data, error: loginError } = await supabase.auth.signInWithPassword({
+          email,
+          password
+        });
+        if (loginError) {
+          if (loginError.message === 'Email not confirmed') {
+            throw new Error('Debes confirmar tu correo electrónico. Revisa tu bandeja de entrada o spam.');
+          }
+          throw loginError;
         }
-        throw loginError;
-      }
-      
-      // Verificación adicional de perfil tras logueo exitoso en Auth
-      if (data.user) {
-        const { data: profileData } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', data.user.id)
-          .single();
         
-        if (profileData && profileData.role !== 'admin') {
-          setError('Tu cuenta no tiene permisos de administrador. Contacta al soporte.');
-          await supabase.auth.signOut();
+        // Verificación adicional de perfil tras logueo exitoso en Auth
+        if (data.user) {
+          const { data: profileData } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', data.user.id)
+            .single();
+          
+          if (profileData && profileData.role !== 'admin') {
+            setError('Tu cuenta no tiene permisos de administrador. Contacta al soporte o cambia tu rol en la base de datos.');
+            await supabase.auth.signOut();
+          }
         }
       }
     } catch (err: any) {
@@ -1615,11 +1635,34 @@ const AdminLogin = () => {
             alt="PALBAU" 
             className="h-16 mx-auto mb-6 object-contain"
           />
-          <h1 className="text-3xl font-serif text-navy mb-2">Panel de Control</h1>
-          <p className="text-darkgray/60 font-light">Inicia sesión para administrar tu tienda</p>
+          <h2 className="text-3xl font-serif text-navy mb-2">Panel de Control</h2>
+          <p className="text-darkgray/60 font-light">
+            {isRegister ? 'Crea una cuenta para registrarte' : 'Inicia sesión para administrar tu tienda'}
+          </p>
         </div>
 
-        <form onSubmit={handleLogin} className="space-y-6 relative z-10">
+        <form onSubmit={handleSubmit} className="space-y-6 relative z-10">
+          {isRegister && (
+            <motion.div 
+              initial={{ opacity: 0, height: 0 }}
+              animate={{ opacity: 1, height: 'auto' }}
+              className="space-y-2"
+            >
+              <label className="text-xs uppercase tracking-widest text-gray-400 font-bold flex items-center">
+                <Users size={12} className="mr-2" />
+                Nombre Completo
+              </label>
+              <input 
+                type="text" 
+                required
+                value={fullName}
+                onChange={(e) => setFullName(e.target.value)}
+                placeholder="Tu nombre"
+                className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light"
+              />
+            </motion.div>
+          )}
+
           <div className="space-y-2">
             <label className="text-xs uppercase tracking-widest text-gray-400 font-bold flex items-center">
               <Mail size={12} className="mr-2" />
@@ -1630,7 +1673,7 @@ const AdminLogin = () => {
               required
               value={email}
               onChange={(e) => setEmail(e.target.value)}
-              placeholder="admin@palbau.com"
+              placeholder="correo@ejemplo.com"
               className="w-full bg-gray-50 border border-gray-100 rounded-lg px-4 py-3 outline-none focus:border-gold focus:ring-1 focus:ring-gold/20 transition-all font-light"
             />
           </div>
@@ -1678,11 +1721,20 @@ const AdminLogin = () => {
             disabled={loading}
             className="w-full bg-navy text-white py-4 rounded-lg font-bold uppercase tracking-[0.2em] text-xs hover:bg-gold transition-all shadow-lg active:scale-95 disabled:opacity-50 disabled:active:scale-100"
           >
-            {loading ? 'Iniciando sesión...' : 'Entrar al Panel'}
+            {loading ? (isRegister ? 'Registrando...' : 'Iniciando sesión...') : (isRegister ? 'Crear Cuenta' : 'Entrar al Panel')}
           </button>
         </form>
 
-        {(!users || users.length === 0) && (
+        <div className="mt-6 text-center relative z-10">
+          <button 
+            onClick={() => setIsRegister(!isRegister)}
+            className="text-xs text-gold hover:text-navy font-bold uppercase tracking-widest transition-colors"
+          >
+            {isRegister ? '¿Ya tienes cuenta? Inicia Sesión' : '¿No tienes cuenta? Regístrate'}
+          </button>
+        </div>
+
+        {(!users || users.length === 0) && !isRegister && (
           <div className="mt-10 pt-8 border-t border-gray-100 text-center relative z-10">
             <p className="text-xs text-gray-400 mb-4 font-light italic">¿Es la primera vez que entras?</p>
             <button 
