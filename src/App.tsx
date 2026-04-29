@@ -446,12 +446,17 @@ const Footer = () => {
           <h4 className="font-serif text-lg mb-6 uppercase tracking-[0.15em] text-lightblue">Contacto</h4>
           <ul className="space-y-4 text-white/80 font-light text-sm">
             <li>contacto@palbau.com</li>
-            <li>+52 123 456 7890</li>
+            <li>+52 443 137 3266</li>
             <li className="pt-4">
-              <button className="flex items-center justify-center space-x-3 bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-3 rounded-sm transition-colors w-full sm:w-auto">
+              <a 
+                href="https://wa.me/524431373266" 
+                target="_blank" 
+                rel="noreferrer"
+                className="flex items-center justify-center space-x-3 bg-[#25D366] hover:bg-[#128C7E] text-white px-6 py-3 rounded-sm transition-colors w-full sm:w-auto"
+              >
                 <MessageCircle size={18} />
                 <span className="uppercase tracking-wider text-xs font-medium">Atención por WhatsApp</span>
-              </button>
+              </a>
             </li>
           </ul>
         </div>
@@ -643,22 +648,7 @@ const CartModal = () => {
     try {
       setIsProcessing(true);
 
-      // 1. Save to Supabase
-      const orderData = {
-        customer_name: customerName,
-        customer_address: customerAddress,
-        total: cartTotal
-      };
-
-      const orderItems = cart.map(item => ({
-        product_id: item.product.id,
-        quantity: item.quantity,
-        price: item.product.price
-      }));
-
-      await createOrder(orderData, orderItems);
-
-      // 2. Prepare WhatsApp message
+      // 1. Prepare WhatsApp message
       let message = `Hola! Soy *${customerName}*.\n`;
       message += `Ubicación de entrega: ${customerAddress}\n\n`;
       message += "Me gustaría realizar el siguiente pedido:\n\n";
@@ -668,16 +658,34 @@ const CartModal = () => {
       message += `\n*Total: $${cartTotal.toFixed(2)}*`;
       
       const encodedMessage = encodeURIComponent(message);
+
+      // 2. Try to save to Supabase (but don't block if it fails)
+      try {
+        const orderData = {
+          customer_name: customerName,
+          customer_address: customerAddress,
+          total: cartTotal
+        };
+
+        const orderItems = cart.map(item => ({
+          product_id: item.product.id,
+          quantity: item.quantity,
+          price: item.product.price
+        }));
+
+        await createOrder(orderData, orderItems);
+      } catch (dbError) {
+        console.error('Database order save failed, but proceeding with WhatsApp:', dbError);
+      }
       
       // 3. Open WhatsApp
       window.open(`https://wa.me/524431373266?text=${encodedMessage}`, '_blank');
       
-      // 4. Close cart (optional: clear cart)
+      // 4. Close cart
       setIsCartOpen(false);
-      // Note: You might want to clear the cart here too if useCart supports it
     } catch (error) {
       console.error('Error during checkout:', error);
-      alert('Hubo un error al procesar tu pedido. Por favor intenta de nuevo.');
+      alert('Hubo un error inesperado. Por favor intenta de nuevo.');
     } finally {
       setIsProcessing(false);
     }
