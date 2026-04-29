@@ -818,8 +818,59 @@ const AdminProducts = () => {
 
       {/* Product List */}
       <div className="bg-white rounded-xl shadow-sm border border-gray-100 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-left border-collapse">
+        {products.length === 0 ? (
+          <div className="p-20 text-center flex flex-col items-center justify-center space-y-6">
+            <div className="w-20 h-20 bg-gray-50 text-gray-200 rounded-full flex items-center justify-center">
+              <Package size={40} />
+            </div>
+            <div>
+              <h3 className="text-xl font-serif text-navy mb-2">No hay productos registrados</h3>
+              <p className="text-darkgray/60 max-w-md mx-auto text-sm leading-relaxed">
+                Parece que tu inventario está vacío. Si tenías productos anteriormente, es posible que se hayan borrado al ejecutar scripts de configuración de la base de datos.
+              </p>
+            </div>
+            
+            <div className="flex flex-col sm:flex-row space-y-3 sm:space-y-0 sm:space-x-4">
+              <button 
+                onClick={() => setIsAdding(true)}
+                className="bg-navy text-white px-8 py-3 rounded-md hover:bg-lightblue hover:text-navy transition-all font-medium"
+              >
+                Registrar primer producto
+              </button>
+              
+              <button 
+                onClick={async () => {
+                  if (window.confirm('Esto cargará productos de ejemplo para que puedas ver cómo luce tu tienda. ¿Continuar?')) {
+                    setIsSaving(true);
+                    try {
+                      const sampleProducts = [
+                        { name: 'Queso Oaxaca Premium', price: 185, stock: 50, category: 'Quesos Nacionales', description: 'Queso tipo oaxaca de hebra fina y sabor láctico natural. Ideal para quesadillas y fundir.', image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?auto=format&fit=crop&q=80&w=800' },
+                        { name: 'Jamón Serrano Reserva', price: 420, stock: 20, category: 'Embutidos Maduros', description: 'Jamón serrano con 12 meses de curación natural. Sabor intenso y textura suave.', image: 'https://images.unsplash.com/photo-1626202114407-74431ae55609?auto=format&fit=crop&q=80&w=800' },
+                        { name: 'Chorizo Argentino', price: 145, stock: 35, category: 'Salchichas y Chorizos', description: 'Chorizo estilo argentino para asar. Con especias naturales y carne de cerdo seleccionada.', image: 'https://images.unsplash.com/photo-1544025162-d76694265947?auto=format&fit=crop&q=80&w=800' }
+                      ];
+                      
+                      for (const p of sampleProducts) {
+                        await addProduct({ ...p, is_active: true });
+                      }
+                      
+                      alert('¡Listo! Se han cargado productos de ejemplo.');
+                    } catch (err) {
+                      alert('Error al cargar productos: ' + (err as any).message);
+                    } finally {
+                      setIsSaving(false);
+                    }
+                  }
+                }}
+                disabled={isSaving}
+                className="bg-white border border-gray-200 text-darkgray px-8 py-3 rounded-md hover:bg-gray-50 transition-all font-medium disabled:opacity-50"
+              >
+                Cargar productos de ejemplo
+              </button>
+            </div>
+          </div>
+        ) : (
+          <div className="overflow-x-auto">
+            <table className="w-full text-left border-collapse">
             <thead>
               <tr className="bg-gray-50 border-b border-gray-100">
                 <th className="px-6 py-4 text-xs font-semibold text-gray-500 uppercase tracking-wider">Producto</th>
@@ -884,6 +935,7 @@ const AdminProducts = () => {
             </tbody>
           </table>
         </div>
+      )}
       </div>
     </div>
   );
@@ -1478,8 +1530,39 @@ const AdminCategories = () => {
       </AnimatePresence>
 
       <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
-        {categories.map((cat) => (
-          <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-md transition-shadow">
+        {categories.length === 0 ? (
+          <div className="col-span-full py-20 bg-white rounded-xl border border-dashed border-gray-200 text-center flex flex-col items-center justify-center space-y-6">
+            <div className="w-16 h-16 bg-gray-50 text-gray-300 rounded-full flex items-center justify-center">
+              <Tags size={32} />
+            </div>
+            <div>
+              <h3 className="text-xl font-serif text-navy mb-2">No hay categorías</h3>
+              <p className="text-darkgray/60 max-w-sm mx-auto text-sm">
+                Las categorías son necesarias para organizar tus productos y mostrarlos en el inicio.
+              </p>
+            </div>
+            <button 
+              onClick={async () => {
+                if (window.confirm('¿Deseas cargar las categorías principales (Quesos, Jamones, etc.)?')) {
+                  const demoCats = [
+                    { name: 'Quesos Nacionales', description: 'Oaxaca, Rancho, Panela y más frescos naturales.', image: 'https://images.unsplash.com/photo-1552767059-ce182ead6c1b?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'Embutidos Maduros', description: 'Jamones serranos, chorizos y carnes frías de alta calidad.', image: 'https://images.unsplash.com/photo-1626202114407-74431ae55609?auto=format&fit=crop&q=80&w=800' },
+                    { name: 'Quesos Importados', description: 'Manchego, Gouda, Brie y selecciones internacionales.', image: 'https://images.unsplash.com/photo-1485962391945-448ef0fd3525?auto=format&fit=crop&q=80&w=800' }
+                  ];
+                  for (const c of demoCats) {
+                    await addCategory(c);
+                  }
+                  alert('Categorías iniciales creadas.');
+                }
+              }}
+              className="px-6 py-2 border border-navy text-navy rounded-md hover:bg-navy hover:text-white transition-colors text-sm font-medium"
+            >
+              Cargar categorías base
+            </button>
+          </div>
+        ) : (
+          categories.map((cat) => (
+            <div key={cat.id} className="bg-white rounded-xl overflow-hidden shadow-sm border border-gray-100 group hover:shadow-md transition-shadow">
             <div className="h-48 relative overflow-hidden">
               <img src={cat.image} alt={cat.name} className="w-full h-full object-cover transition-transform duration-500 group-hover:scale-105" />
               <div className="absolute top-4 right-4 flex space-x-2">
@@ -1504,7 +1587,7 @@ const AdminCategories = () => {
               <p className="text-darkgray/70 text-sm font-light line-clamp-2">{cat.description}</p>
             </div>
           </div>
-        ))}
+        )))}
       </div>
     </div>
   );
